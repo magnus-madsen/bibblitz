@@ -3,4 +3,7 @@ name        = "bibblitz"
 description = "test"
 version     = "0.1.0"
 flix        = "0.65.0"
-authors     = ["John Doe <john@example.com>"]
+authors     = ["Magnus Madsen"]
+
+[dependencies]
+"github:mlutze/flix-json"              = "0.12.19"
