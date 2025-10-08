@@ -158,11 +158,15 @@ def readRefsFile(filename: String): String \ FileRead =
     FileRead.read(filename)
 
 /// Loads name-DOI pairs from a JSON file
-def loadRefsFromFile(filename: String): Option[List[(String, String)]] \ FileRead =
+def loadRefsFromFile(filename: String): Option[List[(String, String)]] \ {FileRead, Logger} =
     let jsonContent = readRefsFile(filename);
     forM (
-        refMap <- parseRefs(jsonContent)
-    ) yield extractRefs(refMap)
+        refMap <- parseRefs(jsonContent);
+        refs = extractRefs(refMap)
+    ) yield {
+        Logger.info("Successfully parsed ${filename} with ${List.length(refs)} references");
+        refs
+    }
 
 /// Fetches and combines BibTeX entries for a list of name-DOI pairs
 def fetchAllBibTeXFromRefs(refs: List[(String, String)]): Result[String, String] \ {Http, Logger} =
@@ -170,7 +174,10 @@ def fetchAllBibTeXFromRefs(refs: List[(String, String)]): Result[String, String]
     let zipped = List.zip(refs, results);
     let successes = List.filterMap(match ((name, _doi), result) ->
         match result {
-            case Ok(bibtex) => Some(bibtex)
+            case Ok(bibtex) => {
+                Logger.info("Successfully retrieved BibTeX for ${name}");
+                Some(bibtex)
+            }
             case Err(err) => {
                 Logger.warn("Failed to fetch ${name}: ${err}");
                 None
