@@ -173,15 +173,15 @@ def fetchAllBibTeX(dois: List[String]): Result[String, String] \ Http =
     Ok(combined)
 
 /// Prints BibTeX entries for DOIs loaded from refs.json
-def printBibTeXFromFile(filename: String): Unit \ {FileRead, Http, IO} =
+def printBibTeXFromFile(filename: String): Unit \ {FileRead, Http, Logger} =
     match loadDOIsFromFile(filename) {
-        case None => println("Error: Could not parse ${filename}")
+        case None => Logger.fatal("Could not parse ${filename}")
         case Some(dois) => {
-            println("Fetching BibTeX entries for ${List.length(dois)} DOIs...");
-            println("");
+            Logger.info("Fetching BibTeX entries for ${List.length(dois)} DOIs...");
+            Logger.info("");
             match fetchAllBibTeX(dois) {
-                case Ok(bibtex) => println(bibtex)
-                case Err(err) => println("Error fetching DOIs: ${err}")
+                case Ok(bibtex) => Logger.info(bibtex)
+                case Err(err) => Logger.fatal("Error fetching DOIs: ${err}")
             }
         }
     }
@@ -191,7 +191,8 @@ def main(): Unit \ IO =
     match (run {
         printBibTeXFromFile("refs.json")
     } with FileRead.runWithIO
-      with Http.runWithIO) {
+      with Http.runWithIO
+      with Logger.runWithIO) {
         case Ok(_) => ()
-        case Err(err) => println("Error: ${err}")
+        case Err(err) => Logger.runWithIO(_ -> Logger.fatal("${err}"))
     }
