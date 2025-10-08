@@ -5,16 +5,14 @@ use Json.JsonElement
 use Json.JsonElement.{JsonObject, JsonString, JsonArray, JsonNumber}
 
 /// Fetches CSL-JSON metadata for a given DOI from CrossRef
-def fetchCslJson(doi: String): Result[String, JsonElement] \ HttpWithResult =
+def fetchCslJson(doi: String): Result[String, JsonElement] \ Http =
     use Json.Parse.parse;
     let url = "https://api.crossref.org/works/${doi}/transform/application/vnd.citationstyles.csl+json";
     let headers = Map#{};
-    match HttpWithResult.get(url, headers) {
-        case Err(_) => Err("HTTP request failed")
-        case Ok(Http.Response.Response(r)) => match parse(r#body) {
-            case Some(json) => Ok(json)
-            case None => Err("Failed to parse JSON")
-        }
+    let Http.Response.Response(r) = Http.get(url, headers);
+    match parse(r#body) {
+        case Some(json) => Ok(json)
+        case None => Err("Failed to parse JSON")
     }
 
 /// Gets a string field from a JSON object
@@ -115,7 +113,7 @@ def cslToBibTeX(cslJson: JsonElement): Option[String] =
     }
 
 /// Fetches CSL-JSON and converts to BibTeX for a single DOI
-def fetchBibTeX(doi: String): Result[String, String] \ HttpWithResult =
+def fetchBibTeX(doi: String): Result[String, String] \ Http =
     match fetchCslJson(doi) {
         case Err(e) => Err(e)
         case Ok(cslJson) => match cslToBibTeX(cslJson) {
@@ -125,7 +123,7 @@ def fetchBibTeX(doi: String): Result[String, String] \ HttpWithResult =
     }
 
 /// Processes a list of DOIs and returns their BibTeX entries
-def processDOIs(dois: List[String]): List[Result[String, String]] \ HttpWithResult =
+def processDOIs(dois: List[String]): List[Result[String, String]] \ Http =
     List.map(fetchBibTeX, dois)
 
 /// Combines multiple BibTeX entries into a single string
@@ -157,29 +155,27 @@ def extractDOIs(refMap: Map[String, String]): List[String] =
     Map.valuesOf(refMap)
 
 /// Reads the refs.json file and returns its content
-def readRefsFile(filename: String): Result[IoError, String] \ FileReadWithResult =
-    FileReadWithResult.read(filename)
+def readRefsFile(filename: String): String \ FileRead =
+    FileRead.read(filename)
 
 /// Loads DOIs from a JSON file
-def loadDOIsFromFile(filename: String): Option[List[String]] \ FileReadWithResult =
-    match readRefsFile(filename) {
-        case Err(_) => None
-        case Ok(jsonContent) => forM (
-            refMap <- parseRefs(jsonContent)
-        ) yield extractDOIs(refMap)
-    }
+def loadDOIsFromFile(filename: String): Option[List[String]] \ FileRead =
+    let jsonContent = readRefsFile(filename);
+    forM (
+        refMap <- parseRefs(jsonContent)
+    ) yield extractDOIs(refMap)
 
 /// Fetches and combines BibTeX entries for a list of DOIs
-def fetchAllBibTeX(dois: List[String]): Result[String, String] \ HttpWithResult =
+def fetchAllBibTeX(dois: List[String]): Result[String, String] \ Http =
     let results = processDOIs(dois);
     let successes = List.filterMap(Result.toOption, results);
     let combined = combineBibTeX(successes);
     Ok(combined)
 
 /// Prints BibTeX entries for DOIs loaded from refs.json
-def printBibTeXFromFile(filename: String): Unit \ {FileReadWithResult, HttpWithResult, IO} =
+def printBibTeXFromFile(filename: String): Unit \ {FileRead, Http, IO} =
     match loadDOIsFromFile(filename) {
-        case None => println("Error: Could not read or parse ${filename}")
+        case None => println("Error: Could not parse ${filename}")
         case Some(dois) => {
             println("Fetching BibTeX entries for ${List.length(dois)} DOIs...");
             println("");
@@ -192,7 +188,10 @@ def printBibTeXFromFile(filename: String): Unit \ {FileReadWithResult, HttpWithR
 
 /// Main function - reads DOIs from refs.json file
 def main(): Unit \ IO =
-    run {
+    match (run {
         printBibTeXFromFile("refs.json")
-    } with FileReadWithResult.runWithIO
-      with HttpWithResult.runWithIO
+    } with FileRead.runWithIO
+      with Http.runWithIO) {
+        case Ok(_) => ()
+        case Err(err) => println("Error: ${err}")
+    }
