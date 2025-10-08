@@ -21,3 +21,23 @@ Useful Flix examples can be found at https://github.com/flix/flix/tree/master/ex
 ### JSON API
 
 The JSON API can be found at https://github.com/mlutze/flix-json/activity
+
+## Development Workflow
+
+### Checking Compilation
+
+Check if the project compiles by running:
+
+```bash
+java -jar flix.jar check
+```
+
+IMPORTANT: Always run this command after every refactor to ensure the code compiles correctly.
+
+### Running the Program
+
+Run the main program with:
+
+```bash
+java -jar flix.jar run
+```
