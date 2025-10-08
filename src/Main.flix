@@ -165,9 +165,19 @@ def loadRefsFromFile(filename: String): Option[List[(String, String)]] \ FileRea
     ) yield extractRefs(refMap)
 
 /// Fetches and combines BibTeX entries for a list of name-DOI pairs
-def fetchAllBibTeXFromRefs(refs: List[(String, String)]): Result[String, String] \ Http =
+def fetchAllBibTeXFromRefs(refs: List[(String, String)]): Result[String, String] \ {Http, Logger} =
     let results = processRefs(refs);
-    let successes = List.filterMap(Result.toOption, results);
+    let zipped = List.zip(refs, results);
+    let successes = List.filterMap(match ((name, _doi), result) ->
+        match result {
+            case Ok(bibtex) => Some(bibtex)
+            case Err(err) => {
+                Logger.warn("Failed to fetch ${name}: ${err}");
+                None
+            }
+        },
+        zipped
+    );
     let combined = combineBibTeX(successes);
     Ok(combined)
 
