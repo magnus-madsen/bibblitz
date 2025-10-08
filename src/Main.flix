@@ -17,23 +17,17 @@ def fetchCslJson(doi: String): Result[String, JsonElement] \ Http =
 
 /// Gets a string field from a JSON object
 def getJsonString(obj: Map[String, JsonElement], key: String): Option[String] =
-    forM (
-        value <- Map.get(key, obj);
-        str <- match value {
-            case JsonString(s) => Some(s)
-            case _ => None
-        }
-    ) yield str
+    match Map.get(key, obj) {
+        case Some(JsonString(s)) => Some(s)
+        case _ => None
+    }
 
 /// Gets an array field from a JSON object
 def getJsonArray(obj: Map[String, JsonElement], key: String): Option[List[JsonElement]] =
-    forM (
-        value <- Map.get(key, obj);
-        arr <- match value {
-            case JsonArray(a) => Some(a)
-            case _ => None
-        }
-    ) yield arr
+    match Map.get(key, obj) {
+        case Some(JsonArray(a)) => Some(a)
+        case _ => None
+    }
 
 /// Extracts author name from CSL-JSON author object
 def formatAuthor(authorJson: JsonElement): Option[String] =
