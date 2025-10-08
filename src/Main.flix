@@ -72,7 +72,7 @@ def extractYear(dateJson: JsonElement): Option[String] =
     }
 
 /// Converts CSL-JSON to BibTeX entry
-def cslToBibTeX(cslJson: JsonElement): Option[String] =
+def cslToBibTeX(key: String, cslJson: JsonElement): Option[String] =
     match cslJson {
         case JsonObject(obj) => {
             let entryType = getJsonString(obj, "type") |> Option.getWithDefault("misc");
@@ -81,7 +81,6 @@ def cslToBibTeX(cslJson: JsonElement): Option[String] =
                              else "@misc";
 
             let doi = getJsonString(obj, "DOI") |> Option.getWithDefault("unknown");
-            let key = doi;
 
             let title = getJsonString(obj, "title");
             let container = getJsonString(obj, "container-title");
@@ -112,19 +111,19 @@ def cslToBibTeX(cslJson: JsonElement): Option[String] =
         case _ => None
     }
 
-/// Fetches CSL-JSON and converts to BibTeX for a single DOI
-def fetchBibTeX(doi: String): Result[String, String] \ Http =
+/// Fetches CSL-JSON and converts to BibTeX for a single reference
+def fetchBibTeX(name: String, doi: String): Result[String, String] \ Http =
     match fetchCslJson(doi) {
         case Err(e) => Err(e)
-        case Ok(cslJson) => match cslToBibTeX(cslJson) {
+        case Ok(cslJson) => match cslToBibTeX(name, cslJson) {
             case Some(bibtex) => Ok(bibtex)
             case None => Err("Failed to convert to BibTeX")
         }
     }
 
-/// Processes a list of DOIs and returns their BibTeX entries
-def processDOIs(dois: List[String]): List[Result[String, String]] \ Http =
-    List.map(fetchBibTeX, dois)
+/// Processes a list of name-DOI pairs and returns their BibTeX entries
+def processRefs(refs: List[(String, String)]): List[Result[String, String]] \ Http =
+    List.map(match (name, doi) -> fetchBibTeX(name, doi), refs)
 
 /// Combines multiple BibTeX entries into a single string
 def combineBibTeX(entries: List[String]): String =
@@ -150,38 +149,38 @@ def parseRefs(jsonString: String): Option[Map[String, String]] =
         case _ => Map#{}
     }
 
-/// Extracts all DOI values from a reference map
-def extractDOIs(refMap: Map[String, String]): List[String] =
-    Map.valuesOf(refMap)
+/// Extracts all name-DOI pairs from a reference map
+def extractRefs(refMap: Map[String, String]): List[(String, String)] =
+    Map.toList(refMap)
 
 /// Reads the refs.json file and returns its content
 def readRefsFile(filename: String): String \ FileRead =
     FileRead.read(filename)
 
-/// Loads DOIs from a JSON file
-def loadDOIsFromFile(filename: String): Option[List[String]] \ FileRead =
+/// Loads name-DOI pairs from a JSON file
+def loadRefsFromFile(filename: String): Option[List[(String, String)]] \ FileRead =
     let jsonContent = readRefsFile(filename);
     forM (
         refMap <- parseRefs(jsonContent)
-    ) yield extractDOIs(refMap)
+    ) yield extractRefs(refMap)
 
-/// Fetches and combines BibTeX entries for a list of DOIs
-def fetchAllBibTeX(dois: List[String]): Result[String, String] \ Http =
-    let results = processDOIs(dois);
+/// Fetches and combines BibTeX entries for a list of name-DOI pairs
+def fetchAllBibTeXFromRefs(refs: List[(String, String)]): Result[String, String] \ Http =
+    let results = processRefs(refs);
     let successes = List.filterMap(Result.toOption, results);
     let combined = combineBibTeX(successes);
     Ok(combined)
 
-/// Prints BibTeX entries for DOIs loaded from refs.json
+/// Prints BibTeX entries for references loaded from refs.json
 def printBibTeXFromFile(filename: String): Unit \ {FileRead, Http, Logger} =
-    match loadDOIsFromFile(filename) {
+    match loadRefsFromFile(filename) {
         case None => Logger.fatal("Could not parse ${filename}")
-        case Some(dois) => {
-            Logger.info("Fetching BibTeX entries for ${List.length(dois)} DOIs...");
+        case Some(refs) => {
+            Logger.info("Fetching BibTeX entries for ${List.length(refs)} references...");
             Logger.info("");
-            match fetchAllBibTeX(dois) {
+            match fetchAllBibTeXFromRefs(refs) {
                 case Ok(bibtex) => Logger.info(bibtex)
-                case Err(err) => Logger.fatal("Error fetching DOIs: ${err}")
+                case Err(err) => Logger.fatal("Error fetching references: ${err}")
             }
         }
     }
