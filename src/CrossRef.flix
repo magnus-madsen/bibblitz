@@ -17,6 +17,16 @@
 mod CrossRef {
     use Json.JsonElement
 
+    /// Fetches CSL-JSON and converts to BibTeX for a single reference
+    pub def fetchBibTeX(name: String, doi: String): Result[String, String] \ Http =
+        match fetchCslJson(doi) {
+            case Err(e) => Err(e)
+            case Ok(cslJson) => match Bibtex.cslToBibTeX(name, cslJson) {
+                case Some(bibtex) => Ok(bibtex)
+                case None => Err("Failed to convert to BibTeX")
+            }
+        }
+
     /// Fetches CSL-JSON metadata for a given DOI from CrossRef
     def fetchCslJson(doi: String): Result[String, JsonElement] \ Http =
         use Json.Parse.parse;
@@ -28,13 +38,4 @@ mod CrossRef {
             case None => Err("Failed to parse JSON")
         }
 
-    /// Fetches CSL-JSON and converts to BibTeX for a single reference
-    pub def fetchBibTeX(name: String, doi: String): Result[String, String] \ Http =
-        match fetchCslJson(doi) {
-            case Err(e) => Err(e)
-            case Ok(cslJson) => match Bibtex.cslToBibTeX(name, cslJson) {
-                case Some(bibtex) => Ok(bibtex)
-                case None => Err("Failed to convert to BibTeX")
-            }
-        }
 }
