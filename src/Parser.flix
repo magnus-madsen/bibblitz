@@ -19,7 +19,7 @@ mod Parser {
     use Json.JsonElement.{JsonObject, JsonString}
 
     /// Parses a JSON string containing an object mapping names to DOIs
-    pub def parseRefs(jsonString: String): Option[Map[String, String]] =
+    def parseRefs(jsonString: String): Option[Map[String, String]] =
         use Json.Parse.parse;
         forM (
             jsonElement <- parse(jsonString)
@@ -39,11 +39,11 @@ mod Parser {
         }
 
     /// Extracts all name-DOI pairs from a reference map
-    pub def extractRefs(refMap: Map[String, String]): List[(String, String)] =
+    def extractRefs(refMap: Map[String, String]): List[(String, String)] =
         Map.toList(refMap)
 
     /// Reads the refs.json file and returns its content
-    pub def readRefsFile(filename: String): String \ FileRead =
+    def readRefsFile(filename: String): String \ FileRead =
         FileRead.read(filename)
 
     /// Loads name-DOI pairs from a JSON file

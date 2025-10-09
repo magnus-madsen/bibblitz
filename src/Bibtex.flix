@@ -19,7 +19,7 @@ mod Bibtex {
     use Json.JsonElement.{JsonObject, JsonString, JsonArray, JsonNumber}
 
     /// Extracts author name from CSL-JSON author object
-    pub def formatAuthor(authorJson: JsonElement): Option[String] =
+    def formatAuthor(authorJson: JsonElement): Option[String] =
         match authorJson {
             case JsonObject(obj) => {
                 let given = JsonUtils.getJsonString(obj, "given") |> Option.getWithDefault("");
@@ -30,12 +30,12 @@ mod Bibtex {
         }
 
     /// Formats author list for BibTeX
-    pub def formatAuthors(authors: List[JsonElement]): String =
+    def formatAuthors(authors: List[JsonElement]): String =
         let names = List.filterMap(formatAuthor, authors);
         String.intercalate(" and ", names)
 
     /// Extracts year from date-parts array
-    pub def extractYear(dateJson: JsonElement): Option[String] =
+    def extractYear(dateJson: JsonElement): Option[String] =
         match dateJson {
             case JsonObject(obj) => {
                 forM (
@@ -95,11 +95,11 @@ mod Bibtex {
         }
 
     /// Combines multiple BibTeX entries into a single string
-    pub def combineBibTeX(entries: List[String]): String =
+    def combineBibTeX(entries: List[String]): String =
         String.intercalate("\n\n", entries)
 
     /// Processes a list of name-DOI pairs and returns their BibTeX entries
-    pub def processRefs(refs: List[(String, String)]): List[Result[String, String]] \ Http =
+    def processRefs(refs: List[(String, String)]): List[Result[String, String]] \ Http =
         List.map(match (name, doi) -> CrossRef.fetchBibTeX(name, doi), refs)
 
     /// Fetches and combines BibTeX entries for a list of name-DOI pairs

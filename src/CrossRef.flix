@@ -18,7 +18,7 @@ mod CrossRef {
     use Json.JsonElement
 
     /// Fetches CSL-JSON metadata for a given DOI from CrossRef
-    pub def fetchCslJson(doi: String): Result[String, JsonElement] \ Http =
+    def fetchCslJson(doi: String): Result[String, JsonElement] \ Http =
         use Json.Parse.parse;
         let url = "https://api.crossref.org/works/${doi}/transform/application/vnd.citationstyles.csl+json";
         let headers = Map#{};
