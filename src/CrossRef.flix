@@ -19,23 +19,19 @@ mod CrossRef {
 
     /// Fetches CSL-JSON and converts to BibTeX for a single reference
     pub def fetchBibTeX(name: String, doi: String): Result[String, Bibtex.Bibtex] \ Http =
-        match fetchCslJson(doi) {
-            case Err(e) => Err(e)
-            case Ok(cslJson) => match Bibtex.cslToBibTeX(name, cslJson) {
-                case Some(bibtex) => Ok(bibtex)
-                case None => Err("Failed to convert to BibTeX")
-            }
-        }
+        forM (
+            cslJson <- fetchJson(doi);
+            bibtex <- Option.toOk("Failed to convert to BibTeX", Bibtex.cslToBibTeX(name, cslJson))
+        ) yield bibtex
+
+    /// Constructs the CrossRef API URL for fetching CSL-JSON metadata
+    def getUrl(doi: String): String =
+        "https://api.crossref.org/works/${doi}/transform/application/vnd.citationstyles.csl+json"
 
     /// Fetches CSL-JSON metadata for a given DOI from CrossRef
-    def fetchCslJson(doi: String): Result[String, JsonElement] \ Http =
+    def fetchJson(doi: String): Result[String, JsonElement] \ Http =
         use Json.Parse.parse;
-        let url = "https://api.crossref.org/works/${doi}/transform/application/vnd.citationstyles.csl+json";
-        let headers = Map#{};
-        let Http.Response.Response(r) = Http.get(url, headers);
-        match parse(r#body) {
-            case Some(json) => Ok(json)
-            case None => Err("Failed to parse JSON")
-        }
+        let Http.Response.Response(r) = Http.get(getUrl(doi), Map#{});
+        Option.toOk("Failed to parse JSON", parse(r#body))
 
 }
