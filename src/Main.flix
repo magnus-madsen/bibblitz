@@ -17,32 +17,20 @@
 // DOI to BibTeX Converter using CrossRef API
 // Fetches BibTeX entries for a list of DOIs and prints them to stdout
 
-/// Processes BibTeX entries from input file and writes to output file
-def processBibTeXFile(inputFile: String, outputFile: String): Unit \ {FileRead, FileWrite, Http, Logger} =
-    match Parser.loadBibliography(inputFile) {
-        case None => Logger.fatal("Could not parse '${inputFile}'.")
-        case Some(refs) => {
-            Logger.info("Fetching data from CrossRef.");
-            match Bibtex.fetchAllBibTeXFromRefs(refs) {
-                case Ok(bibtex) => {
-                    FileWrite.write({str = bibtex}, outputFile);
-                    Logger.info("Wrote BibTeX entries to '${outputFile}'.")
-                }
-                case Err(err) => Logger.fatal("Error fetching references: '${err}'.")
-            }
-        }
-    }
-
-/// Helper function to run BibTeX processing with all effect handlers
-def runBibTeXProcessing(inputFile: String, outputFile: String): Unit \ IO =
-    match (run {
+/// Main function - processes BibTeX from input file to output file
+def main(): Unit \ IO =
+    let result = run {
+        let (inputFile, outputFile) = parseCommandLineArgs();
         processBibTeXFile(inputFile, outputFile)
-    } with FileRead.runWithIO
+    } with Environment.runWithIO
+      with Exit.runWithIO
+      with FileRead.runWithIO
       with FileWrite.runWithIO
       with Http.runWithIO
-      with Logger.runWithIO) {
+      with Logger.runWithIO;
+    match result {
         case Ok(_) => ()
-        case Err(err) => Logger.runWithIO(_ -> Logger.fatal("${err}"))
+        case Err(err) => println("${err}")
     }
 
 /// Parses command line arguments and returns input and output file paths
@@ -61,13 +49,18 @@ def parseCommandLineArgs(): (String, String) \ {Environment, Exit, Logger} =
         }
     }
 
-/// Main function - processes BibTeX from input file to output file
-def main(): Unit \ IO =
-    let (inputFile, outputFile) = Logger.runWithIO(_ ->
-        Exit.runWithIO(_ ->
-            Environment.runWithIO(_ ->
-                parseCommandLineArgs()
-            )
-        )
-    );
-    runBibTeXProcessing(inputFile, outputFile)
+/// Processes BibTeX entries from input file and writes to output file
+def processBibTeXFile(inputFile: String, outputFile: String): Unit \ {FileRead, FileWrite, Http, Logger} =
+    match Parser.loadBibliography(inputFile) {
+        case None => Logger.fatal("Could not parse '${inputFile}'.")
+        case Some(refs) => {
+            Logger.info("Fetching data from CrossRef.");
+            match Bibtex.fetchAllBibTeXFromRefs(refs) {
+                case Ok(bibtex) => {
+                    FileWrite.write({str = bibtex}, outputFile);
+                    Logger.info("Wrote BibTeX entries to '${outputFile}'.")
+                }
+                case Err(err) => Logger.fatal("Error fetching references: '${err}'.")
+            }
+        }
+    }
