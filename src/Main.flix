@@ -19,7 +19,7 @@
 
 /// Processes BibTeX entries from input file and writes to output file
 def processBibTeXFile(inputFile: String, outputFile: String): Unit \ {FileRead, FileWrite, Http, Logger} =
-    match Parser.loadRefsFromFile(inputFile) {
+    match Parser.loadBibliography(inputFile) {
         case None => Logger.fatal("Could not parse ${inputFile}")
         case Some(refs) => {
             Logger.info("Fetching BibTeX entries for ${List.length(refs)} references...");

@@ -25,30 +25,31 @@ mod Parser {
     pub enum Doi(String) with Eq, Order, ToString
 
     /// Loads name-DOI pairs from a JSON file
-    pub def loadRefsFromFile(filename: String): Option[List[(Name, Doi)]] \ {FileRead, Logger} =
+    pub def loadBibliography(filename: String): Option[List[(Name, Doi)]] \ {FileRead, Logger} =
         let jsonContent = FileRead.read(filename);
         forM (
-            refMap <- parseRefs(jsonContent);
+            refMap <- parseBibliography(jsonContent);
             refs = Map.toList(refMap)
         ) yield {
-            Logger.info("Successfully parsed ${filename} with ${List.length(refs)} references");
+            Logger.info("Parsed '${filename}'. Found ${List.length(refs)} DOIs.");
             refs
         }
 
     /// Parses a JSON string containing an object mapping names to DOIs
-    def parseRefs(jsonString: String): Option[Map[Name, Doi]] =
+    def parseBibliography(jsonString: String): Option[Map[Name, Doi]] =
         use Json.Parse.parse;
-        use Option.map;
-        parse(jsonString) |> map(match jsonElement ->
-            match jsonElement {
-                case JsonObject(obj) =>
-                    obj |> Map.toList |> List.filterMap(extractDoiPair) |> List.toMap
-                case _ => Map#{}
-            }
-        )
+        parse(jsonString) |> Option.map(buildDoiMap)
+
+    /// Parses a JsonElement into a Map of name-DOI pairs
+    def buildDoiMap(jsonElement: JsonElement): Map[Name, Doi] =
+        match jsonElement {
+            case JsonObject(obj) =>
+                obj |> Map.toList |> List.filterMap(parseBibEntry) |> List.toMap
+            case _ => Map#{}
+        }
 
     /// Extracts a DOI pair from a JSON object entry
-    def extractDoiPair(entry: (String, JsonElement)): Option[(Name, Doi)] =
+    def parseBibEntry(entry: (String, JsonElement)): Option[(Name, Doi)] =
         match entry {
             case (name, JsonString(doi)) => Some((Name.Name(name), Doi.Doi(doi)))
             case _ => None
