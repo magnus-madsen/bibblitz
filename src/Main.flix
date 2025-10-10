@@ -45,16 +45,29 @@ def runBibTeXProcessing(inputFile: String, outputFile: String): Unit \ IO =
         case Err(err) => Logger.runWithIO(_ -> Logger.fatal("${err}"))
     }
 
-/// Main function - processes BibTeX from input file to output file
-def main(): Unit \ IO =
-    let args = Environment.runWithIO(Environment.getArgs);
+/// Parses command line arguments and returns input and output file paths
+def parseCommandLineArgs(): (String, String) \ {Environment, Exit, Logger} =
+    let args = Environment.getArgs();
     match args {
         case Nil => {
-            Logger.runWithIO(_ -> Logger.info("No arguments provided. Using refs.json -> refs.bib."));
-            runBibTeXProcessing("refs.json", "refs.bib")
+            Logger.info("No arguments provided. Using refs.json -> refs.bib.");
+            ("refs.json", "refs.bib")
         }
         case inputFile :: outputFile :: Nil =>
-            runBibTeXProcessing(inputFile, outputFile)
-        case _ =>
-            Logger.runWithIO(_ -> Logger.fatal("Usage: java -jar BibBlitz.jar [<input.json> <output.bib>]"))
+            (inputFile, outputFile)
+        case _ => {
+            Logger.fatal("Usage: java -jar BibBlitz.jar [<input.json> <output.bib>]");
+            Exit.exit(1)
+        }
     }
+
+/// Main function - processes BibTeX from input file to output file
+def main(): Unit \ IO =
+    let (inputFile, outputFile) = Logger.runWithIO(_ ->
+        Exit.runWithIO(_ ->
+            Environment.runWithIO(_ ->
+                parseCommandLineArgs()
+            )
+        )
+    );
+    runBibTeXProcessing(inputFile, outputFile)
