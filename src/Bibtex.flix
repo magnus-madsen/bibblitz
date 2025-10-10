@@ -72,42 +72,6 @@ mod Bibtex {
             "${typeStr}{${rec#key},\n${body}\n}"
     }
 
-    /// Extracts author name from CSL-JSON author object
-    def formatAuthor(authorJson: JsonElement): Option[String] =
-        match authorJson {
-            case JsonObject(obj) => {
-                let given = JsonUtils.getJsonString(obj, "given") |> Option.getWithDefault("");
-                let family = JsonUtils.getJsonString(obj, "family") |> Option.getWithDefault("");
-                if (String.isEmpty(family)) None else Some("${family}, ${given}")
-            }
-            case _ => None
-        }
-
-    /// Formats author list for BibTeX
-    def formatAuthors(authors: List[JsonElement]): String =
-        let names = List.filterMap(formatAuthor, authors);
-        String.intercalate(" and ", names)
-
-    /// Extracts year from date-parts array
-    def extractYear(dateJson: JsonElement): Option[String] =
-        match dateJson {
-            case JsonObject(obj) => {
-                forM (
-                    dateParts <- JsonUtils.getJsonArray(obj, "date-parts");
-                    firstDate <- List.head(dateParts);
-                    yearArray <- match firstDate {
-                        case JsonArray(a) => Some(a)
-                        case _ => None
-                    };
-                    yearElem <- List.head(yearArray)
-                ) yield match yearElem {
-                    case JsonNumber(n) => BigInt.toString(BigDecimal.toBigInt(n))
-                    case _ => "0000"
-                }
-            }
-            case _ => None
-        }
-
     /// Converts CSL-JSON to BibTeX entry
     pub def cslToBibTeX(key: String, cslJson: JsonElement): Option[Bibtex] =
         match cslJson {
@@ -149,6 +113,48 @@ mod Bibtex {
             case _ => None
         }
 
+    /// Fetches and combines BibTeX entries for a list of name-DOI pairs
+    pub def fetchAllBibTeXFromRefs(refs: List[(Name, Doi)]): Result[String, String] \ {Http, Logger} =
+        let successes = processRefs(refs);
+        let combined = combineBibTeX(successes);
+        Ok(combined)
+
+    /// Extracts author name from CSL-JSON author object
+    def formatAuthor(authorJson: JsonElement): Option[String] =
+        match authorJson {
+            case JsonObject(obj) => {
+                let given = JsonUtils.getJsonString(obj, "given") |> Option.getWithDefault("");
+                let family = JsonUtils.getJsonString(obj, "family") |> Option.getWithDefault("");
+                if (String.isEmpty(family)) None else Some("${family}, ${given}")
+            }
+            case _ => None
+        }
+
+    /// Formats author list for BibTeX
+    def formatAuthors(authors: List[JsonElement]): String =
+        let names = List.filterMap(formatAuthor, authors);
+        String.intercalate(" and ", names)
+
+    /// Extracts year from date-parts array
+    def extractYear(dateJson: JsonElement): Option[String] =
+        match dateJson {
+            case JsonObject(obj) => {
+                forM (
+                    dateParts <- JsonUtils.getJsonArray(obj, "date-parts");
+                    firstDate <- List.head(dateParts);
+                    yearArray <- match firstDate {
+                        case JsonArray(a) => Some(a)
+                        case _ => None
+                    };
+                    yearElem <- List.head(yearArray)
+                ) yield match yearElem {
+                    case JsonNumber(n) => BigInt.toString(BigDecimal.toBigInt(n))
+                    case _ => "0000"
+                }
+            }
+            case _ => None
+        }
+
     /// Combines multiple BibTeX entries into a single string
     def combineBibTeX(entries: List[Bibtex]): String =
         let strings = List.map(ToString.toString, entries);
@@ -172,10 +178,4 @@ mod Bibtex {
             },
             indexed
         )
-
-    /// Fetches and combines BibTeX entries for a list of name-DOI pairs
-    pub def fetchAllBibTeXFromRefs(refs: List[(Name, Doi)]): Result[String, String] \ {Http, Logger} =
-        let successes = processRefs(refs);
-        let combined = combineBibTeX(successes);
-        Ok(combined)
 }
