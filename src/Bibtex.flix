@@ -20,6 +20,7 @@ mod Bibtex {
     use Parser.{Name, Doi}
     use Parser.Name.Name
     use Parser.Doi.Doi
+    use Sanitize.sanitize
 
     /// Represents a BibTeX entry type
     pub enum BibtexType {
@@ -82,7 +83,8 @@ mod Bibtex {
 
     /// Converts a Bibtex entry to its string representation
     pub def toString(b: Bibtex): String =
-        let Bibtex.Bibtex(rec) = b;
+        let sanitized = sanitize(b);
+        let Bibtex.Bibtex(rec) = sanitized;
         let typeStr = match rec#entryType {
             case BibtexType.Article => "@article"
             case BibtexType.InProceedings => "@inproceedings"
