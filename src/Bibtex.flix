@@ -155,20 +155,22 @@ mod Bibtex {
         String.intercalate("\n\n", strings)
 
     /// Processes a list of name-DOI pairs and returns their BibTeX entries
-    /// Logs immediately after each fetch completes
+    /// Logs immediately after each fetch completes with progress indicator
     def processRefs(refs: List[(Name, Doi)]): List[Bibtex] \ {Http, Logger} =
-        List.filterMap(match (Name(name), Doi(doi)) ->
+        let total = List.length(refs);
+        let indexed = List.zipWithIndex(refs);
+        List.filterMap(match (idx, (Name(name), Doi(doi))) ->
             match CrossRef.fetchBibTeX(name, doi) {
                 case Ok(bibtex) => {
-                    Logger.info("Successfully retrieved BibTeX for ${name}");
+                    Logger.info("[${idx + 1}/${total}] Successfully retrieved BibTeX for ${name}");
                     Some(bibtex)
                 }
                 case Err(_err) => {
-                    Logger.warn("Failed to fetch ${name}");
+                    Logger.warn("[${idx + 1}/${total}] Failed to fetch ${name}");
                     None
                 }
             },
-            refs
+            indexed
         )
 
     /// Fetches and combines BibTeX entries for a list of name-DOI pairs
