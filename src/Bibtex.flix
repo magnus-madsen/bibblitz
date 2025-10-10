@@ -45,6 +45,33 @@ mod Bibtex {
         })
     }
 
+    /// ToString instance for Bibtex entries
+    instance ToString[Bibtex] {
+        pub def toString(b: Bibtex): String =
+            let sanitized = sanitize(b);
+            let Bibtex.Bibtex(rec) = sanitized;
+            let typeStr = match rec#entryType {
+                case BibtexType.Article => "@article"
+                case BibtexType.InProceedings => "@inproceedings"
+                case BibtexType.Misc => "@misc"
+            };
+
+            let fields = List.filterMap(identity,
+                Some("  title = {${rec#title}}") ::
+                Some("  author = {${rec#author}}") ::
+                rec#journal |> Option.map(j -> "  journal = {${j}}") ::
+                rec#year |> Option.map(y -> "  year = {${y}}") ::
+                rec#volume |> Option.map(v -> "  volume = {${v}}") ::
+                rec#pages |> Option.map(p -> "  pages = {${p}}") ::
+                rec#publisher |> Option.map(p -> "  publisher = {${p}}") ::
+                Some("  doi = {${rec#doi}}") ::
+                Nil
+            );
+
+            let body = String.intercalate(",\n", fields);
+            "${typeStr}{${rec#key},\n${body}\n}"
+    }
+
     /// Extracts author name from CSL-JSON author object
     def formatAuthor(authorJson: JsonElement): Option[String] =
         match authorJson {
@@ -80,31 +107,6 @@ mod Bibtex {
             }
             case _ => None
         }
-
-    /// Converts a Bibtex entry to its string representation
-    pub def toString(b: Bibtex): String =
-        let sanitized = sanitize(b);
-        let Bibtex.Bibtex(rec) = sanitized;
-        let typeStr = match rec#entryType {
-            case BibtexType.Article => "@article"
-            case BibtexType.InProceedings => "@inproceedings"
-            case BibtexType.Misc => "@misc"
-        };
-
-        let fields = List.filterMap(identity,
-            Some("  title = {${rec#title}}") ::
-            Some("  author = {${rec#author}}") ::
-            rec#journal |> Option.map(j -> "  journal = {${j}}") ::
-            rec#year |> Option.map(y -> "  year = {${y}}") ::
-            rec#volume |> Option.map(v -> "  volume = {${v}}") ::
-            rec#pages |> Option.map(p -> "  pages = {${p}}") ::
-            rec#publisher |> Option.map(p -> "  publisher = {${p}}") ::
-            Some("  doi = {${rec#doi}}") ::
-            Nil
-        );
-
-        let body = String.intercalate(",\n", fields);
-        "${typeStr}{${rec#key},\n${body}\n}"
 
     /// Converts CSL-JSON to BibTeX entry
     pub def cslToBibTeX(key: String, cslJson: JsonElement): Option[Bibtex] =
@@ -149,7 +151,7 @@ mod Bibtex {
 
     /// Combines multiple BibTeX entries into a single string
     def combineBibTeX(entries: List[Bibtex]): String =
-        let strings = List.map(toString, entries);
+        let strings = List.map(ToString.toString, entries);
         String.intercalate("\n\n", strings)
 
     /// Processes a list of name-DOI pairs and returns their BibTeX entries
