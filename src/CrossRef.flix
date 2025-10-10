@@ -18,7 +18,7 @@ mod CrossRef {
     use Json.JsonElement
 
     /// Fetches CSL-JSON and converts to BibTeX for a single reference
-    pub def fetchBibTeX(name: String, doi: String): Result[String, String] \ Http =
+    pub def fetchBibTeX(name: String, doi: String): Result[String, Bibtex.Bibtex] \ Http =
         match fetchCslJson(doi) {
             case Err(e) => Err(e)
             case Ok(cslJson) => match Bibtex.cslToBibTeX(name, cslJson) {
