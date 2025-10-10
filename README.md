@@ -17,7 +17,7 @@ Given a JSON file `refs.json` with the content:
 You can create a `refs.bib` by running:
 
 ```sh
-java -jar BibBlitz.jar refs.json refs.bib
+java -jar bibblitz.jar refs.json refs.bib
 ```
 
 The program will fetch metadata from CrossRef and display progress:
