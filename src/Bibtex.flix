@@ -155,15 +155,10 @@ mod Bibtex {
         String.intercalate("\n\n", strings)
 
     /// Processes a list of name-DOI pairs and returns their BibTeX entries
-    def processRefs(refs: List[(Name, Doi)]): List[Result[String, Bibtex]] \ Http =
-        List.map(match (Name(name), Doi(doi)) -> CrossRef.fetchBibTeX(name, doi), refs)
-
-    /// Fetches and combines BibTeX entries for a list of name-DOI pairs
-    pub def fetchAllBibTeXFromRefs(refs: List[(Name, Doi)]): Result[String, String] \ {Http, Logger} =
-        let results = processRefs(refs);
-        let zipped = List.zip(refs, results);
-        let successes: List[Bibtex] = List.filterMap(match ((Name(name), _doi), result) ->
-            match result {
+    /// Logs immediately after each fetch completes
+    def processRefs(refs: List[(Name, Doi)]): List[Bibtex] \ {Http, Logger} =
+        List.filterMap(match (Name(name), Doi(doi)) ->
+            match CrossRef.fetchBibTeX(name, doi) {
                 case Ok(bibtex) => {
                     Logger.info("Successfully retrieved BibTeX for ${name}");
                     Some(bibtex)
@@ -173,8 +168,12 @@ mod Bibtex {
                     None
                 }
             },
-            zipped
-        );
+            refs
+        )
+
+    /// Fetches and combines BibTeX entries for a list of name-DOI pairs
+    pub def fetchAllBibTeXFromRefs(refs: List[(Name, Doi)]): Result[String, String] \ {Http, Logger} =
+        let successes = processRefs(refs);
         let combined = combineBibTeX(successes);
         Ok(combined)
 }
