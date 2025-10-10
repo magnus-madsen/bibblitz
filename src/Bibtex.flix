@@ -113,8 +113,8 @@ mod Bibtex {
             case _ => None
         }
 
-    /// Fetches and combines BibTeX entries for a list of name-DOI pairs
-    pub def fetchAllBibTeXFromRefs(refs: List[(Name, Doi)]): Result[String, String] \ {Http, Logger} =
+    /// Fetches BibTeX entries for a list of name-DOI pairs and formats them as a combined string
+    pub def fetchAndFormat(refs: List[(Name, Doi)]): Result[String, String] \ {Http, Logger} =
         let successes = processRefs(refs);
         let combined = combineBibTeX(successes);
         Ok(combined)

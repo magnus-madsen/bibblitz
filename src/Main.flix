@@ -21,7 +21,7 @@
 def main(): Unit \ IO =
     let result = run {
         let (inputFile, outputFile) = parseCommandLineArgs();
-        processBibTeXFile(inputFile, outputFile)
+        parseFetchAndWrite(inputFile, outputFile)
     } with Environment.runWithIO
       with Exit.runWithIO
       with FileRead.runWithIO
@@ -35,8 +35,7 @@ def main(): Unit \ IO =
 
 /// Parses command line arguments and returns input and output file paths
 def parseCommandLineArgs(): (String, String) \ {Environment, Exit, Logger} =
-    let args = Environment.getArgs();
-    match args {
+    match Environment.getArgs() {
         case Nil => {
             Logger.info("No arguments provided. Using refs.json -> refs.bib.");
             ("refs.json", "refs.bib")
@@ -49,13 +48,13 @@ def parseCommandLineArgs(): (String, String) \ {Environment, Exit, Logger} =
         }
     }
 
-/// Processes BibTeX entries from input file and writes to output file
-def processBibTeXFile(inputFile: String, outputFile: String): Unit \ {FileRead, FileWrite, Http, Logger} =
+/// Parses bibliography from input file, fetches BibTeX from CrossRef, and writes to output file
+def parseFetchAndWrite(inputFile: String, outputFile: String): Unit \ {FileRead, FileWrite, Http, Logger} =
     match Parser.loadBibliography(inputFile) {
         case None => Logger.fatal("Could not parse '${inputFile}'.")
         case Some(refs) => {
             Logger.info("Fetching data from CrossRef.");
-            match Bibtex.fetchAllBibTeXFromRefs(refs) {
+            match Bibtex.fetchAndFormat(refs) {
                 case Ok(bibtex) => {
                     FileWrite.write({str = bibtex}, outputFile);
                     Logger.info("Wrote BibTeX entries to '${outputFile}'.")
