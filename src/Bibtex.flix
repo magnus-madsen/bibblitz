@@ -62,7 +62,6 @@ mod Bibtex {
                 rec#journal |> Option.map(j -> "  journal   = {${j}}") ::
                 rec#year |> Option.map(y -> "  year      = {${y}}") ::
                 rec#volume |> Option.map(v -> "  volume    = {${v}}") ::
-                rec#pages |> Option.map(p -> "  pages     = {${p}}") ::
                 rec#publisher |> Option.map(p -> "  publisher = {${p}}") ::
                 Some("  doi       = {${rec#doi}}") ::
                 Nil

@@ -41,7 +41,6 @@ The generated `refs.bib` file will contain:
   author    = {Lutze, Matthew and Madsen, Magnus and Schuster, Philipp and Brachthäuser, Jonathan Immanuel},
   journal   = {Proceedings of the ACM on Programming Languages},
   volume    = {7},
-  pages     = {448-475},
   publisher = {Association for Computing Machinery (ACM)},
   doi       = {10.1145/3607846}
 }
@@ -51,7 +50,6 @@ The generated `refs.bib` file will contain:
   author    = {Lutze, Matthew and Madsen, Magnus},
   journal   = {Proceedings of the ACM on Programming Languages},
   volume    = {8},
-  pages     = {394-416},
   publisher = {Association for Computing Machinery (ACM)},
   doi       = {10.1145/3656393}
 }
@@ -61,7 +59,6 @@ The generated `refs.bib` file will contain:
   author    = {Madsen, Magnus and Lhoták, Ondřej},
   journal   = {Proceedings of the ACM on Programming Languages},
   volume    = {9},
-  pages     = {2115-2143},
   publisher = {Association for Computing Machinery (ACM)},
   doi       = {10.1145/3763126}
 }
