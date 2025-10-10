@@ -20,15 +20,15 @@
 /// Processes BibTeX entries from input file and writes to output file
 def processBibTeXFile(inputFile: String, outputFile: String): Unit \ {FileRead, FileWrite, Http, Logger} =
     match Parser.loadBibliography(inputFile) {
-        case None => Logger.fatal("Could not parse ${inputFile}")
+        case None => Logger.fatal("Could not parse '${inputFile}'.")
         case Some(refs) => {
-            Logger.info("Fetching BibTeX entries for ${List.length(refs)} references...");
+            Logger.info("Fetching data from CrossRef.");
             match Bibtex.fetchAllBibTeXFromRefs(refs) {
                 case Ok(bibtex) => {
                     FileWrite.write({str = bibtex}, outputFile);
-                    Logger.info("Successfully wrote BibTeX entries to ${outputFile}")
+                    Logger.info("Wrote BibTeX entries to '${outputFile}'.")
                 }
-                case Err(err) => Logger.fatal("Error fetching references: ${err}")
+                case Err(err) => Logger.fatal("Error fetching references: '${err}'.")
             }
         }
     }
@@ -50,7 +50,7 @@ def main(): Unit \ IO =
     let args = Environment.runWithIO(Environment.getArgs);
     match args {
         case Nil => {
-            Logger.runWithIO(_ -> Logger.info("No arguments provided. Using defaults: refs.json -> refs.bib"));
+            Logger.runWithIO(_ -> Logger.info("No arguments provided. Using refs.json -> refs.bib."));
             runBibTeXProcessing("refs.json", "refs.bib")
         }
         case inputFile :: outputFile :: Nil =>

@@ -168,11 +168,11 @@ mod Bibtex {
         List.filterMap(match (idx, (Name(name), Doi(doi))) ->
             match CrossRef.fetchBibTeX(name, doi) {
                 case Ok(bibtex) => {
-                    Logger.info("[${idx + 1}/${total}] Successfully retrieved BibTeX for ${name}");
+                    Logger.info("[${idx + 1}/${total}] Fetched '${name}'.");
                     Some(bibtex)
                 }
                 case Err(_err) => {
-                    Logger.warn("[${idx + 1}/${total}] Failed to fetch ${name}");
+                    Logger.warn("[${idx + 1}/${total}] Failed to fetch '${name}'.");
                     None
                 }
             },
