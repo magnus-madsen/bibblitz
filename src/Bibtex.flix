@@ -17,6 +17,9 @@
 mod Bibtex {
     use Json.JsonElement
     use Json.JsonElement.{JsonObject, JsonString, JsonArray, JsonNumber}
+    use Parser.{Name, Doi}
+    use Parser.Name.Name
+    use Parser.Doi.Doi
 
     /// Extracts author name from CSL-JSON author object
     def formatAuthor(authorJson: JsonElement): Option[String] =
@@ -99,14 +102,14 @@ mod Bibtex {
         String.intercalate("\n\n", entries)
 
     /// Processes a list of name-DOI pairs and returns their BibTeX entries
-    def processRefs(refs: List[(String, String)]): List[Result[String, String]] \ Http =
-        List.map(match (name, doi) -> CrossRef.fetchBibTeX(name, doi), refs)
+    def processRefs(refs: List[(Name, Doi)]): List[Result[String, String]] \ Http =
+        List.map(match (Name(name), Doi(doi)) -> CrossRef.fetchBibTeX(name, doi), refs)
 
     /// Fetches and combines BibTeX entries for a list of name-DOI pairs
-    pub def fetchAllBibTeXFromRefs(refs: List[(String, String)]): Result[String, String] \ {Http, Logger} =
+    pub def fetchAllBibTeXFromRefs(refs: List[(Name, Doi)]): Result[String, String] \ {Http, Logger} =
         let results = processRefs(refs);
         let zipped = List.zip(refs, results);
-        let successes = List.filterMap(match ((name, _doi), result) ->
+        let successes = List.filterMap(match ((Name(name), _doi), result) ->
             match result {
                 case Ok(bibtex) => {
                     Logger.info("Successfully retrieved BibTeX for ${name}");

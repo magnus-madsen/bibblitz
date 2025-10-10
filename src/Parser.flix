@@ -18,8 +18,14 @@ mod Parser {
     use Json.JsonElement
     use Json.JsonElement.{JsonObject, JsonString}
 
+    /// Represents a bibliographic reference name
+    pub enum Name(String) with Eq, Order, ToString
+
+    /// Represents a Digital Object Identifier
+    pub enum Doi(String) with Eq, Order, ToString
+
     /// Loads name-DOI pairs from a JSON file
-    pub def loadRefsFromFile(filename: String): Option[List[(String, String)]] \ {FileRead, Logger} =
+    pub def loadRefsFromFile(filename: String): Option[List[(Name, Doi)]] \ {FileRead, Logger} =
         let jsonContent = FileRead.read(filename);
         forM (
             refMap <- parseRefs(jsonContent);
@@ -30,7 +36,7 @@ mod Parser {
         }
 
     /// Parses a JSON string containing an object mapping names to DOIs
-    def parseRefs(jsonString: String): Option[Map[String, String]] =
+    def parseRefs(jsonString: String): Option[Map[Name, Doi]] =
         use Json.Parse.parse;
         use Option.map;
         parse(jsonString) |> map(match jsonElement ->
@@ -42,9 +48,9 @@ mod Parser {
         )
 
     /// Extracts a DOI pair from a JSON object entry
-    def extractDoiPair(entry: (String, JsonElement)): Option[(String, String)] =
+    def extractDoiPair(entry: (String, JsonElement)): Option[(Name, Doi)] =
         match entry {
-            case (name, JsonString(doi)) => Some((name, doi))
+            case (name, JsonString(doi)) => Some((Name.Name(name), Doi.Doi(doi)))
             case _ => None
         }
 }
