@@ -19,9 +19,10 @@ mod CrossRef {
 
     /// Fetches CSL-JSON and converts to BibTeX for a single reference
     pub def fetchBibTeX(name: String, doi: String): Result[String, Bibtex.Bibtex] \ Http =
+        use Json.JsonError.JsonError;
         forM (
             cslJson <- fetchJson(doi);
-            bibtex <- Option.toOk("Failed to convert to BibTeX", Bibtex.cslToBibTeX(name, cslJson))
+            bibtex <- Result.mapErr(match JsonError(path, expected) -> "Failed to convert to BibTeX at ${path}: expected ${expected}", Bibtex.cslToBibTeX(name, cslJson))
         ) yield bibtex
 
     /// Constructs the CrossRef API URL for fetching CSL-JSON metadata
