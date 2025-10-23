@@ -60,16 +60,12 @@ mod Csl {
     /// FromJson instance for CslAuthor
     instance FromJson[CslAuthor] {
         pub def fromJsonAt(p: Path, x: JsonElement): Result[JsonError, CslAuthor] = {
-            match x {
-                case JsonObject(map) => {
-                    forM (
-                        family <- getAtKey(p, "family", map);
-                        givenOpt <- getAtKeyOpt(p, "given", map)
-                    ) yield {
-                        CslAuthor.CslAuthor({ given = givenOpt, family = family })
-                    }
-                }
-                case _ => Err(JsonError(p, Set#{"object"}))
+            forM (
+                map <- fromJsonAt(p, x);
+                family <- getAtKey(p, "family", map);
+                givenOpt <- getAtKeyOpt(p, "given", map)
+            ) yield {
+                CslAuthor.CslAuthor({ given = givenOpt, family = family })
             }
         }
     }
@@ -77,15 +73,11 @@ mod Csl {
     /// FromJson instance for CslDate
     instance FromJson[CslDate] {
         pub def fromJsonAt(p: Path, x: JsonElement): Result[JsonError, CslDate] = {
-            match x {
-                case JsonObject(map) => {
-                    forM (
-                        dateParts <- getAtKey(p, "date-parts", map)
-                    ) yield {
-                        CslDate.CslDate({ dateParts = dateParts })
-                    }
-                }
-                case _ => Err(JsonError(p, Set#{"object"}))
+            forM (
+                map <- fromJsonAt(p, x);
+                dateParts <- getAtKey(p, "date-parts", map)
+            ) yield {
+                CslDate.CslDate({ dateParts = dateParts })
             }
         }
     }
@@ -93,33 +85,29 @@ mod Csl {
     /// FromJson instance for Csl
     instance FromJson[Csl] {
         pub def fromJsonAt(p: Path, x: JsonElement): Result[JsonError, Csl] = {
-            match x {
-                case JsonObject(map) => {
-                    forM (
-                        cslType <- getAtKey(p, "type", map);
-                        title <- getAtKey(p, "title", map);
-                        author <- getAtKey(p, "author", map);
-                        doi <- getAtKey(p, "DOI", map);
-                        containerTitleOpt <- getAtKeyOpt(p, "container-title", map);
-                        publishedPrintOpt <- getAtKeyOpt(p, "published-print", map);
-                        volumeOpt <- getAtKeyOpt(p, "volume", map);
-                        pageOpt <- getAtKeyOpt(p, "page", map);
-                        publisherOpt <- getAtKeyOpt(p, "publisher", map)
-                    ) yield {
-                        Csl.Csl({
-                            cslType = cslType,
-                            title = title,
-                            author = author,
-                            doi = doi,
-                            containerTitle = containerTitleOpt,
-                            publishedPrint = publishedPrintOpt,
-                            volume = volumeOpt,
-                            page = pageOpt,
-                            publisher = publisherOpt
-                        })
-                    }
-                }
-                case _ => Err(JsonError(p, Set#{"object"}))
+            forM (
+                map <- fromJsonAt(p, x);
+                cslType <- getAtKey(p, "type", map);
+                title <- getAtKey(p, "title", map);
+                author <- getAtKey(p, "author", map);
+                doi <- getAtKey(p, "DOI", map);
+                containerTitleOpt <- getAtKeyOpt(p, "container-title", map);
+                publishedPrintOpt <- getAtKeyOpt(p, "published-print", map);
+                volumeOpt <- getAtKeyOpt(p, "volume", map);
+                pageOpt <- getAtKeyOpt(p, "page", map);
+                publisherOpt <- getAtKeyOpt(p, "publisher", map)
+            ) yield {
+                Csl.Csl({
+                    cslType = cslType,
+                    title = title,
+                    author = author,
+                    doi = doi,
+                    containerTitle = containerTitleOpt,
+                    publishedPrint = publishedPrintOpt,
+                    volume = volumeOpt,
+                    page = pageOpt,
+                    publisher = publisherOpt
+                })
             }
         }
     }
