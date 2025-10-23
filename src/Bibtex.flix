@@ -16,11 +16,18 @@
 
 mod Bibtex {
     use Json.JsonElement
-    use Json.JsonElement.{JsonObject, JsonString, JsonArray, JsonNumber}
+    use Json.FromJson.fromJson
+    use Json.JsonError
     use Parser.{Name, Doi}
     use Parser.Name.Name
     use Parser.Doi.Doi
     use Sanitize.sanitize
+    use Csl.Csl
+    use Csl.Csl.Csl
+    use Csl.CslAuthor
+    use Csl.CslAuthor.CslAuthor
+    use Csl.CslDate
+    use Csl.CslDate.CslDate
 
     /// Represents a BibTeX entry type
     pub enum BibtexType {
@@ -72,44 +79,28 @@ mod Bibtex {
     }
 
     /// Converts CSL-JSON to BibTeX entry
-    pub def cslToBibTeX(key: String, cslJson: JsonElement): Option[Bibtex] =
-        match cslJson {
-            case JsonObject(obj) => {
-                let entryType = JsonUtils.getJsonString(obj, "type") |> Option.getWithDefault("misc");
-                let bibtexType = if (entryType == "journal-article") BibtexType.Article
-                                 else if (entryType == "paper-conference") BibtexType.InProceedings
-                                 else BibtexType.Misc;
+    pub def cslToBibTeX(key: String, cslJson: JsonElement): Result[JsonError, Bibtex] =
+        forM (Csl(csl) <- fromJson(cslJson)) yield {
+            let bibtexType = if (csl#cslType == "journal-article") BibtexType.Article
+                             else if (csl#cslType == "paper-conference") BibtexType.InProceedings
+                             else BibtexType.Misc;
 
-                // Required fields - must be present for a valid entry
-                forM (
-                    titleVal <- JsonUtils.getJsonString(obj, "title");
-                    authorsArray <- JsonUtils.getJsonArray(obj, "author");
-                    doiVal <- JsonUtils.getJsonString(obj, "DOI")
-                ) yield {
-                    let authorVal = formatAuthors(authorsArray);
-                    let container = JsonUtils.getJsonString(obj, "container-title");
-                    let year = JsonUtils.getJsonArray(obj, "published-print")
-                               |> Option.flatMap(List.head)
-                               |> Option.flatMap(extractYear);
-                    let volume = JsonUtils.getJsonString(obj, "volume");
-                    let pages = JsonUtils.getJsonString(obj, "page");
-                    let publisher = JsonUtils.getJsonString(obj, "publisher");
+            let authorVal = formatAuthors(csl#author);
+            let year = csl#publishedPrint
+                       |> Option.flatMap(extractYear);
 
-                    Bibtex.Bibtex({
-                        entryType = bibtexType,
-                        key = key,
-                        title = titleVal,
-                        author = authorVal,
-                        journal = container,
-                        year = year,
-                        volume = volume,
-                        pages = pages,
-                        publisher = publisher,
-                        doi = doiVal
-                    })
-                }
-            }
-            case _ => None
+            Bibtex.Bibtex({
+                entryType = bibtexType,
+                key = key,
+                title = csl#title,
+                author = authorVal,
+                journal = csl#containerTitle,
+                year = year,
+                volume = csl#volume,
+                pages = csl#page,
+                publisher = csl#publisher,
+                doi = csl#doi
+            })
         }
 
     /// Fetches BibTeX entries for a list of name-DOI pairs and formats them as a combined string
@@ -118,41 +109,24 @@ mod Bibtex {
         let combined = combineBibTeX(successes);
         Ok(combined)
 
-    /// Extracts author name from CSL-JSON author object
-    def formatAuthor(authorJson: JsonElement): Option[String] =
-        match authorJson {
-            case JsonObject(obj) => {
-                let given = JsonUtils.getJsonString(obj, "given") |> Option.getWithDefault("");
-                let family = JsonUtils.getJsonString(obj, "family") |> Option.getWithDefault("");
-                if (String.isEmpty(family)) None else Some("${family}, ${given}")
-            }
-            case _ => None
-        }
+    /// Formats a single CSL author for BibTeX
+    def formatAuthor(author: CslAuthor): String =
+        let CslAuthor(a) = author;
+        let given = a#given |> Option.getWithDefault("");
+        "${a#family}, ${given}"
 
     /// Formats author list for BibTeX
-    def formatAuthors(authors: List[JsonElement]): String =
-        let names = List.filterMap(formatAuthor, authors);
+    def formatAuthors(authors: List[CslAuthor]): String =
+        let names = List.map(formatAuthor, authors);
         String.intercalate(" and ", names)
 
-    /// Extracts year from date-parts array
-    def extractYear(dateJson: JsonElement): Option[String] =
-        match dateJson {
-            case JsonObject(obj) => {
-                forM (
-                    dateParts <- JsonUtils.getJsonArray(obj, "date-parts");
-                    firstDate <- List.head(dateParts);
-                    yearArray <- match firstDate {
-                        case JsonArray(a) => Some(a)
-                        case _ => None
-                    };
-                    yearElem <- List.head(yearArray)
-                ) yield match yearElem {
-                    case JsonNumber(n) => BigInt.toString(BigDecimal.toBigInt(n))
-                    case _ => "0000"
-                }
-            }
-            case _ => None
-        }
+    /// Extracts year from CSL date
+    def extractYear(date: CslDate): Option[String] =
+        let CslDate(d) = date;
+        forM (
+            firstDate <- List.head(d#dateParts);
+            year <- List.head(firstDate)
+        ) yield Int32.toString(year)
 
     /// Combines multiple BibTeX entries into a single string
     def combineBibTeX(entries: List[Bibtex]): String =
@@ -170,8 +144,8 @@ mod Bibtex {
                     Logger.info("[${idx + 1}/${total}] Fetched '${name}'.");
                     Some(bibtex)
                 }
-                case Err(_err) => {
-                    Logger.warn("[${idx + 1}/${total}] Failed to fetch '${name}'.");
+                case Err(err) => {
+                    Logger.warn("[${idx + 1}/${total}] Failed to fetch '${name}': ${err}");
                     None
                 }
             },
