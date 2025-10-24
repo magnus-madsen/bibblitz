@@ -88,8 +88,7 @@ mod Bibtex {
                 ) yield {
                     let authorVal = formatAuthors(authorsArray);
                     let container = JsonUtils.getJsonString(obj, "container-title");
-                    let year = JsonUtils.getJsonArray(obj, "published-print")
-                               |> Option.flatMap(List.head)
+                    let year = JsonUtils.getJsonObject(obj, "published-print")
                                |> Option.flatMap(extractYear);
                     let volume = JsonUtils.getJsonString(obj, "volume");
                     let pages = JsonUtils.getJsonString(obj, "page");
@@ -135,24 +134,22 @@ mod Bibtex {
         String.intercalate(" and ", names)
 
     /// Extracts year from date-parts array
-    def extractYear(dateJson: JsonElement): Option[String] =
-        match dateJson {
-            case JsonObject(obj) => {
-                forM (
-                    dateParts <- JsonUtils.getJsonArray(obj, "date-parts");
-                    firstDate <- List.head(dateParts);
-                    yearArray <- match firstDate {
-                        case JsonArray(a) => Some(a)
-                        case _ => None
-                    };
-                    yearElem <- List.head(yearArray)
-                ) yield match yearElem {
-                    case JsonNumber(n) => BigInt.toString(BigDecimal.toBigInt(n))
-                    case _ => "0000"
-                }
-            }
+    def extractYear(obj: Map[String, JsonElement]): Option[String] =
+        def toArray(elem) = match elem {
+            case JsonArray(a) => Some(a)
             case _ => None
-        }
+        };
+        def toNumber(elem) = match elem {
+            case JsonNumber(n) => Some(n)
+            case _ => None
+        };
+        forM (
+            dateParts <- JsonUtils.getJsonArray(obj, "date-parts");
+            firstDate <- List.head(dateParts);
+            yearArray <- toArray(firstDate);
+            yearElem <- List.head(yearArray);
+            yearNum <- toNumber(yearElem)
+        ) yield BigInt.toString(BigDecimal.toBigInt(yearNum))
 
     /// Combines multiple BibTeX entries into a single string
     def combineBibTeX(entries: List[Bibtex]): String =

@@ -16,7 +16,7 @@
 
 mod JsonUtils {
     use Json.JsonElement
-    use Json.JsonElement.{JsonArray, JsonString}
+    use Json.JsonElement.{JsonArray, JsonString, JsonObject}
 
     /// Gets a string field from a JSON object
     pub def getJsonString(obj: Map[String, JsonElement], key: String): Option[String] =
@@ -30,5 +30,12 @@ mod JsonUtils {
         match Map.get(key, obj) {
             case Some(JsonArray(a)) => Some(a)
             case _                  => None
+        }
+
+    /// Gets an object field from a JSON object
+    pub def getJsonObject(obj: Map[String, JsonElement], key: String): Option[Map[String, JsonElement]] =
+        match Map.get(key, obj) {
+            case Some(JsonObject(o)) => Some(o)
+            case _                   => None
         }
 }
