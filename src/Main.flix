@@ -22,7 +22,7 @@ def main(): Unit \ IO =
     let result = run {
         let (inputFile, outputFile) = parseCommandLineArgs();
         parseFetchAndWrite(inputFile, outputFile)
-    } with Environment.runWithIO
+    } with Env.runWithIO
       with Exit.runWithIO
       with FileRead.runWithIO
       with FileWrite.runWithIO
@@ -34,8 +34,8 @@ def main(): Unit \ IO =
     }
 
 /// Parses command line arguments and returns input and output file paths
-def parseCommandLineArgs(): (String, String) \ {Environment, Exit, Logger} =
-    match Environment.getArgs() {
+def parseCommandLineArgs(): (String, String) \ {Env, Exit, Logger} =
+    match Env.getArgs() {
         case Nil => {
             Logger.info("No arguments provided. Using refs.json -> refs.bib.");
             ("refs.json", "refs.bib")
