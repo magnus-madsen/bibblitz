@@ -6,5 +6,5 @@ flix        = "0.65.0"
 authors     = ["Magnus Madsen"]
 
 [dependencies]
-"github:mlutze/flix-json"              = { version = "0.12.19", trust = "unrestricted" }
+"github:mlutze/flix-json" = { version = "0.12.19", security = "unrestricted" }
 
