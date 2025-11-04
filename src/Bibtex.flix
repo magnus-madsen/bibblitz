@@ -57,7 +57,7 @@ mod Bibtex {
             };
 
             let fields = List.filterMap(identity,
-                Some("  title     = {${rec#title}}") ::
+                Some("  title     = {{${rec#title}}}") ::
                 Some("  author    = {${rec#author}}") ::
                 rec#journal |> Option.map(j -> "  journal   = {${j}}") ::
                 rec#year |> Option.map(y -> "  year      = {${y}}") ::
@@ -160,15 +160,17 @@ mod Bibtex {
     /// Logs immediately after each fetch completes with progress indicator
     def processRefs(refs: List[(Name, Doi)]): List[Bibtex] \ {Http, Logger} =
         let total = List.length(refs);
+        let width = String.length(Int32.toString(total));
         let indexed = List.zipWithIndex(refs);
         List.filterMap(match (idx, (Name(name), Doi(doi))) ->
+            let paddedIdx = String.padLeft(width, '0', Int32.toString(idx + 1));
             match CrossRef.fetchBibTeX(name, doi) {
                 case Ok(bibtex) => {
-                    Logger.info("[${idx + 1}/${total}] Fetched '${name}'.");
+                    Logger.info("[${paddedIdx}/${total}] ✓ Fetched '${name}'.");
                     Some(bibtex)
                 }
                 case Err(_err) => {
-                    Logger.warn("[${idx + 1}/${total}] Failed to fetch '${name}'.");
+                    Logger.warn("[${paddedIdx}/${total}] ✗ Failed to fetch '${name}'.");
                     None
                 }
             },
