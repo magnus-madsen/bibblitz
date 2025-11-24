@@ -28,7 +28,7 @@ mod JsonUtils {
     /// Gets an array field from a JSON object
     pub def getJsonArray(obj: Map[String, JsonElement], key: String): Option[List[JsonElement]] =
         match Map.get(key, obj) {
-            case Some(JsonArray(a)) => Some(a)
+            case Some(JsonArray(a)) => Some(Vector.toList(a))
             case _                  => None
         }
 

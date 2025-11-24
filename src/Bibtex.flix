@@ -136,7 +136,7 @@ mod Bibtex {
     /// Extracts year from date-parts array
     def extractYear(obj: Map[String, JsonElement]): Option[String] =
         def toArray(elem) = match elem {
-            case JsonArray(a) => Some(a)
+            case JsonArray(a) => Some(Vector.toList(a))
             case _ => None
         };
         def toNumber(elem) = match elem {
