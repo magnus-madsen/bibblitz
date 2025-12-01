@@ -166,11 +166,11 @@ mod Bibtex {
             let paddedIdx = String.padLeft(width, '0', Int32.toString(idx + 1));
             match DoiResolver.fetchBibTeX(name, doi) {
                 case Ok(bibtex) => {
-                    Logger.info("[${paddedIdx}/${total}] ✓ Fetched '${name}'.");
+                    Logger.info(RichString.text("[${paddedIdx}/${total}] ✓ Fetched '") + RichString.blue(name) + RichString.text("'."));
                     Some(bibtex)
                 }
                 case Err(_err) => {
-                    Logger.warn("[${paddedIdx}/${total}] ✗ Failed to fetch '${name}'.");
+                    Logger.warn(RichString.text("[${paddedIdx}/${total}] ✗ Failed to fetch '") + RichString.blue(name) + RichString.text("'."));
                     None
                 }
             },
