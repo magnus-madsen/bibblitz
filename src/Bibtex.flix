@@ -164,7 +164,7 @@ mod Bibtex {
         let indexed = List.zipWithIndex(refs);
         List.filterMap(match (idx, (Name(name), Doi(doi))) ->
             let paddedIdx = String.padLeft(width, '0', Int32.toString(idx + 1));
-            match CrossRef.fetchBibTeX(name, doi) {
+            match DoiResolver.fetchBibTeX(name, doi) {
                 case Ok(bibtex) => {
                     Logger.info("[${paddedIdx}/${total}] ✓ Fetched '${name}'.");
                     Some(bibtex)

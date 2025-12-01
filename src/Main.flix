@@ -53,7 +53,7 @@ def parseFetchAndWrite(inputFile: String, outputFile: String): Unit \ {FileRead,
     match Parser.loadBibliography(inputFile) {
         case None => Logger.fatal("Could not parse '${inputFile}'.")
         case Some(refs) => {
-            Logger.info("Fetching data from CrossRef.");
+            Logger.info("Fetching data from CrossRef and DataCite.");
             match Bibtex.fetchAndFormat(refs) {
                 case Ok(bibtex) => {
                     FileWrite.write({str = bibtex}, outputFile);
