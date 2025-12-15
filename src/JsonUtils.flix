@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-mod JsonUtils {
+pub mod JsonUtils {
     use Json.JsonElement
     use Json.JsonElement.{JsonArray, JsonString, JsonObject}
 

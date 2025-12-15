@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-mod CrossRef {
+pub mod CrossRef {
     use Json.JsonElement
 
     /// Fetches CSL-JSON and converts to BibTeX for a single reference

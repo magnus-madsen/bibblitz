@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-mod Bibtex {
+pub mod Bibtex {
     use Json.JsonElement
     use Json.JsonElement.{JsonObject, JsonString, JsonArray, JsonNumber}
     use Parser.{Name, Doi}

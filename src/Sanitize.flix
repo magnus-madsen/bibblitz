@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-mod Sanitize {
+pub mod Sanitize {
     use Bibtex.Bibtex
     use Bibtex.Bibtex.Bibtex
 

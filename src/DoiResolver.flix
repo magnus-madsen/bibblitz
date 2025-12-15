@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-mod DoiResolver {
+pub mod DoiResolver {
 
     /// Resolves a DOI to BibTeX by trying CrossRef first, then falling back to DataCite.
     /// This handles DOIs from different registration agencies (CrossRef for most publishers,

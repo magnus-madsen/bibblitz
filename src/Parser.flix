@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-mod Parser {
+pub mod Parser {
     use Json.JsonElement
     use Json.JsonElement.{JsonObject, JsonString}
 

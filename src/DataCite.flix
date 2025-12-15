@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-mod DataCite {
+pub mod DataCite {
     use Json.JsonElement
     use Json.JsonElement.{JsonObject, JsonArray, JsonString}
 
