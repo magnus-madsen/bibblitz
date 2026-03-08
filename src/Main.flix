@@ -17,8 +17,11 @@
 // DOI to BibTeX Converter using CrossRef API
 // Fetches BibTeX entries for a list of DOIs and prints them to stdout
 
-/// Main function - processes BibTeX from input file to output file
-def main(): Unit \ IO =
+use Net.Http
+use Net.HttpResponse
+
+// Main function - processes BibTeX from input file to output file
+def main(): Unit \ { Http, IO } =
     let result = run {
         let (inputFile, outputFile) = parseCommandLineArgs();
         parseFetchAndWrite(inputFile, outputFile)
@@ -26,7 +29,6 @@ def main(): Unit \ IO =
       with Exit.runWithIO
       with FileRead.runWithIO
       with FileWrite.runWithIO
-      with Http.runWithIO
       with Logger.runWithIO;
     match result {
         case Ok(_) => ()

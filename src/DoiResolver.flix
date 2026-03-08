@@ -15,6 +15,7 @@
  */
 
 pub mod DoiResolver {
+    use Net.Http
 
     /// Resolves a DOI to BibTeX by trying CrossRef first, then falling back to DataCite.
     /// This handles DOIs from different registration agencies (CrossRef for most publishers,

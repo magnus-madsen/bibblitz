@@ -17,6 +17,8 @@
 pub mod DataCite {
     use Json.JsonElement
     use Json.JsonElement.{JsonObject, JsonArray, JsonString}
+    use Net.Http
+    use Net.HttpResponse
 
     /// Fetches CSL-JSON and converts to BibTeX for a single reference from DataCite
     pub def fetchBibTeX(name: String, doi: String): Result[String, Bibtex.Bibtex] \ Http =
@@ -32,8 +34,10 @@ pub mod DataCite {
     /// Fetches metadata for a given DOI from DataCite
     def fetchJson(doi: String): Result[String, JsonElement] \ Http =
         use Json.Parse.parse;
-        let Http.Response.Response(r) = Http.get(getUrl(doi), Map#{});
-        Option.toOk("Failed to parse JSON", parse(r#body))
+        forM (
+            resp <- Http.get(getUrl(doi)) |> Result.mapErr(e -> "${e}");
+            json <- Option.toOk("Failed to parse JSON", parse(HttpResponse.body(resp)))
+        ) yield json
 
     /// Converts DataCite JSON to BibTeX entry
     /// DataCite has a different JSON structure than CrossRef CSL-JSON

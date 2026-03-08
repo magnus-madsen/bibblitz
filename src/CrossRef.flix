@@ -16,6 +16,8 @@
 
 pub mod CrossRef {
     use Json.JsonElement
+    use Net.Http
+    use Net.HttpResponse
 
     /// Fetches CSL-JSON and converts to BibTeX for a single reference
     pub def fetchBibTeX(name: String, doi: String): Result[String, Bibtex.Bibtex] \ Http =
@@ -31,7 +33,9 @@ pub mod CrossRef {
     /// Fetches CSL-JSON metadata for a given DOI from CrossRef
     def fetchJson(doi: String): Result[String, JsonElement] \ Http =
         use Json.Parse.parse;
-        let Http.Response.Response(r) = Http.get(getUrl(doi), Map#{});
-        Option.toOk("Failed to parse JSON", parse(r#body))
+        forM (
+            resp <- Http.get(getUrl(doi)) |> Result.mapErr(e -> "${e}");
+            json <- Option.toOk("Failed to parse JSON", parse(HttpResponse.body(resp)))
+        ) yield json
 
 }

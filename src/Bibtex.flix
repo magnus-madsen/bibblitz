@@ -17,6 +17,7 @@
 pub mod Bibtex {
     use Json.JsonElement
     use Json.JsonElement.{JsonObject, JsonString, JsonArray, JsonNumber}
+    use Net.Http
     use Parser.{Name, Doi}
     use Parser.Name.Name
     use Parser.Doi.Doi
