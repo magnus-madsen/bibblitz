@@ -19,6 +19,7 @@
 
 use Net.Http
 use Net.HttpResponse
+use Sys.Exit
 
 // Main function - processes BibTeX from input file to output file
 def main(): Unit \ { Http, IO } =
