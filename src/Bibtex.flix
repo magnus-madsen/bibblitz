@@ -60,10 +60,10 @@ pub mod Bibtex {
             let fields = List.filterMap(identity,
                 Some("  title     = {{${rec#title}}}") ::
                 Some("  author    = {${rec#author}}") ::
-                rec#journal |> Option.map(j -> "  journal   = {${j}}") ::
+                rec#journal |> Option.map(j -> "  journal   = {{${j}}}") ::
                 rec#year |> Option.map(y -> "  year      = {${y}}") ::
                 rec#volume |> Option.map(v -> "  volume    = {${v}}") ::
-                rec#publisher |> Option.map(p -> "  publisher = {${p}}") ::
+                rec#publisher |> Option.map(p -> "  publisher = {{${p}}}") ::
                 Some("  doi       = {${rec#doi}}") ::
                 Nil
             );
@@ -78,7 +78,7 @@ pub mod Bibtex {
             case JsonObject(obj) => {
                 let entryType = JsonUtils.getJsonString(obj, "type") |> Option.getWithDefault("misc");
                 let bibtexType = if (entryType == "journal-article") BibtexType.Article
-                                 else if (entryType == "paper-conference" or entryType == "proceedings-article") BibtexType.InProceedings
+                                 else if (entryType == "paper-conference" or entryType == "proceedings-article" or entryType == "book-chapter") BibtexType.InProceedings
                                  else BibtexType.Misc;
 
                 // Required fields - must be present for a valid entry

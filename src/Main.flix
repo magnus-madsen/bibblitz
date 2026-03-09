@@ -19,7 +19,9 @@
 
 use Net.Http
 use Net.HttpResponse
+use Net.Retry
 use Sys.Exit
+use Time.Duration.milliseconds
 
 // Main function - processes BibTeX from input file to output file
 def main(): Unit \ { Http, IO } =
@@ -30,7 +32,8 @@ def main(): Unit \ { Http, IO } =
       with Exit.runWithIO
       with FileRead.runWithIO
       with FileWrite.runWithIO
-      with Logger.runWithIO;
+      with Logger.runWithIO
+      with Http.withRetry(Retry.linear(maxRetries = 3, delay = milliseconds(1000)));
     match result {
         case Ok(_) => ()
         case Err(err) => println("${err}")
