@@ -78,7 +78,7 @@ pub mod Bibtex {
             case JsonObject(obj) => {
                 let entryType = JsonUtils.getJsonString(obj, "type") |> Option.getWithDefault("misc");
                 let bibtexType = if (entryType == "journal-article") BibtexType.Article
-                                 else if (entryType == "paper-conference") BibtexType.InProceedings
+                                 else if (entryType == "paper-conference" or entryType == "proceedings-article") BibtexType.InProceedings
                                  else BibtexType.Misc;
 
                 // Required fields - must be present for a valid entry
