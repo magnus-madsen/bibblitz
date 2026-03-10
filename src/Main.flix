@@ -20,6 +20,7 @@
 use Net.Http
 use Net.HttpResponse
 use Net.Retry
+use Sys.Env
 use Sys.Exit
 use Time.Duration.milliseconds
 
