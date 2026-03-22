@@ -15,6 +15,7 @@
  */
 
 pub mod Parser {
+    use Fs.FileRead
     use Json.JsonElement
     use Json.JsonElement.{JsonObject, JsonString}
 
@@ -26,8 +27,8 @@ pub mod Parser {
 
     /// Loads name-DOI pairs from a JSON file
     pub def loadBibliography(filename: String): Option[List[(Name, Doi)]] \ {FileRead, Logger} =
-        let jsonContent = FileRead.read(filename);
         forM (
+            jsonContent <- FileRead.read(filename) |> Result.toOption;
             refMap <- parseBibliography(jsonContent);
             refs = Map.toList(refMap)
         ) yield {

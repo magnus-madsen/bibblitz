@@ -17,6 +17,8 @@
 // DOI to BibTeX Converter using CrossRef API
 // Fetches BibTeX entries for a list of DOIs and prints them to stdout
 
+use Fs.FileRead
+use Fs.FileWrite
 use Net.Http
 use Net.HttpResponse
 use Net.Retry
@@ -25,14 +27,13 @@ use Sys.Exit
 use Time.Duration.milliseconds
 
 // Main function - processes BibTeX from input file to output file
-def main(): Unit \ { Http, IO } =
-    let result = run {
+def main(): Unit \ { FileRead, FileWrite, Http, IO } =
+    let result: Result[String, Unit] = run {
         let (inputFile, outputFile) = parseCommandLineArgs();
-        parseFetchAndWrite(inputFile, outputFile)
+        parseFetchAndWrite(inputFile, outputFile);
+        Ok(())
     } with Env.runWithIO
       with Exit.runWithIO
-      with FileRead.runWithIO
-      with FileWrite.runWithIO
       with Logger.runWithIO
       with Http.withRetry(Retry.linear(maxRetries = 3, delay = milliseconds(1000)));
     match result {
@@ -63,8 +64,10 @@ def parseFetchAndWrite(inputFile: String, outputFile: String): Unit \ {FileRead,
             Logger.info("Fetching data from CrossRef and DataCite.");
             match Bibtex.fetchAndFormat(refs) {
                 case Ok(bibtex) => {
-                    FileWrite.write({str = bibtex}, outputFile);
-                    Logger.info("Wrote BibTeX entries to '${outputFile}'.")
+                    match FileWrite.write(str = bibtex, outputFile) {
+                        case Ok(_) => Logger.info("Wrote BibTeX entries to '${outputFile}'.")
+                        case Err(err) => Logger.fatal("Error writing '${outputFile}': '${err}'.")
+                    }
                 }
                 case Err(err) => Logger.fatal("Error fetching references: '${err}'.")
             }
