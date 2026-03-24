@@ -16,12 +16,11 @@
 
 pub mod Sanitize {
     use Bibtex.Bibtex
-    use Bibtex.Bibtex.Bibtex
 
     /// Sanitizes a Bibtex entry by applying sanitization functions to relevant fields
     pub def sanitize(b: Bibtex): Bibtex =
-        let Bibtex(rec) = b;
-        Bibtex({
+        let Bibtex.Bibtex(rec) = b;
+        Bibtex.Bibtex({
             entryType = rec#entryType,
             key = rec#key,
             title = sanitizeTitle(rec#title),
