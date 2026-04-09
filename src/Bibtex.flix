@@ -23,13 +23,6 @@ pub mod Bibtex {
     use Parser.Doi.Doi
     use Sanitize.sanitize
 
-    /// Represents a BibTeX entry type
-    pub enum BibtexType {
-        case Article
-        case InProceedings
-        case Misc
-    }
-
     /// Represents a BibTeX entry with all possible fields
     pub enum Bibtex {
         case Bibtex({
@@ -44,6 +37,13 @@ pub mod Bibtex {
             publisher = Option[String],
             doi = String
         })
+    }
+
+    /// Represents a BibTeX entry type
+    pub enum BibtexType {
+        case Article
+        case InProceedings
+        case Misc
     }
 
     /// ToString instance for Bibtex entries
