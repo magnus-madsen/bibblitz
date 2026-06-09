@@ -15,27 +15,26 @@
  */
 
 pub mod JsonUtils {
-    use Json.JsonElement
-    use Json.JsonElement.{JsonArray, JsonString, JsonObject}
+    use Util.Json
 
     /// Gets a string field from a JSON object
-    pub def getJsonString(obj: Map[String, JsonElement], key: String): Option[String] =
+    pub def getJsonString(obj: Map[String, Json], key: String): Option[String] =
         match Map.get(key, obj) {
-            case Some(JsonString(s)) => Some(s)
-            case _                   => None
+            case Some(Json.JString(s)) => Some(s)
+            case _                     => None
         }
 
     /// Gets an array field from a JSON object
-    pub def getJsonArray(obj: Map[String, JsonElement], key: String): Option[List[JsonElement]] =
+    pub def getJsonArray(obj: Map[String, Json], key: String): Option[List[Json]] =
         match Map.get(key, obj) {
-            case Some(JsonArray(a)) => Some(Vector.toList(a))
-            case _                  => None
+            case Some(Json.JArray(a)) => Some(Vector.toList(a))
+            case _                    => None
         }
 
     /// Gets an object field from a JSON object
-    pub def getJsonObject(obj: Map[String, JsonElement], key: String): Option[Map[String, JsonElement]] =
+    pub def getJsonObject(obj: Map[String, Json], key: String): Option[Map[String, Json]] =
         match Map.get(key, obj) {
-            case Some(JsonObject(o)) => Some(o)
-            case _                   => None
+            case Some(Json.JObject(o)) => Some(o)
+            case _                     => None
         }
 }

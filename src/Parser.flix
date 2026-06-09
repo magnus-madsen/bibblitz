@@ -16,8 +16,7 @@
 
 pub mod Parser {
     use Fs.FileRead
-    use Json.JsonElement
-    use Json.JsonElement.{JsonObject, JsonString}
+    use Util.Json
 
     /// Represents a bibliographic reference name
     pub enum Name(String) with Eq, Order, ToString
@@ -38,21 +37,20 @@ pub mod Parser {
 
     /// Parses a JSON string containing an object mapping names to DOIs
     def parseBibliography(jsonString: String): Option[Map[Name, Doi]] =
-        use Json.Parse.parse;
-        parse(jsonString) |> Option.map(buildDoiMap)
+        Json.parse(jsonString) |> Result.toOption |> Option.map(buildDoiMap)
 
-    /// Parses a JsonElement into a Map of name-DOI pairs
-    def buildDoiMap(jsonElement: JsonElement): Map[Name, Doi] =
+    /// Parses a Json value into a Map of name-DOI pairs
+    def buildDoiMap(jsonElement: Json): Map[Name, Doi] =
         match jsonElement {
-            case JsonObject(obj) =>
+            case Json.JObject(obj) =>
                 obj |> Map.toList |> List.filterMap(parseBibEntry) |> List.toMap
             case _ => Map#{}
         }
 
     /// Extracts a DOI pair from a JSON object entry
-    def parseBibEntry(entry: (String, JsonElement)): Option[(Name, Doi)] =
+    def parseBibEntry(entry: (String, Json)): Option[(Name, Doi)] =
         match entry {
-            case (name, JsonString(doi)) => Some((Name.Name(name), Doi.Doi(doi)))
+            case (name, Json.JString(doi)) => Some((Name.Name(name), Doi.Doi(doi)))
             case _ => None
         }
 }

@@ -15,8 +15,7 @@
  */
 
 pub mod Bibtex {
-    use Json.JsonElement
-    use Json.JsonElement.{JsonObject, JsonString, JsonArray, JsonNumber}
+    use Util.Json
     use Net.Http
     use Parser.{Name, Doi}
     use Parser.Name.Name
@@ -73,9 +72,9 @@ pub mod Bibtex {
     }
 
     /// Converts CSL-JSON to BibTeX entry
-    pub def cslToBibTeX(key: String, cslJson: JsonElement): Option[Bibtex] =
+    pub def cslToBibTeX(key: String, cslJson: Json): Option[Bibtex] =
         match cslJson {
-            case JsonObject(obj) => {
+            case Json.JObject(obj) => {
                 let entryType = JsonUtils.getJsonString(obj, "type") |> Option.getWithDefault("misc");
                 let bibtexType = if (entryType == "journal-article") BibtexType.Article
                                  else if (entryType == "paper-conference" or entryType == "proceedings-article" or entryType == "book-chapter") BibtexType.InProceedings
@@ -119,9 +118,9 @@ pub mod Bibtex {
         Ok(combined)
 
     /// Extracts author name from CSL-JSON author object
-    def formatAuthor(authorJson: JsonElement): Option[String] =
+    def formatAuthor(authorJson: Json): Option[String] =
         match authorJson {
-            case JsonObject(obj) => {
+            case Json.JObject(obj) => {
                 let given = JsonUtils.getJsonString(obj, "given") |> Option.getWithDefault("");
                 let family = JsonUtils.getJsonString(obj, "family") |> Option.getWithDefault("");
                 if (String.isEmpty(family)) None else Some("${family}, ${given}")
@@ -130,18 +129,18 @@ pub mod Bibtex {
         }
 
     /// Formats author list for BibTeX
-    def formatAuthors(authors: List[JsonElement]): String =
+    def formatAuthors(authors: List[Json]): String =
         let names = List.filterMap(formatAuthor, authors);
         String.intercalate(" and ", names)
 
     /// Extracts year from date-parts array
-    def extractYear(obj: Map[String, JsonElement]): Option[String] =
+    def extractYear(obj: Map[String, Json]): Option[String] =
         def toArray(elem) = match elem {
-            case JsonArray(a) => Some(Vector.toList(a))
+            case Json.JArray(a) => Some(Vector.toList(a))
             case _ => None
         };
         def toNumber(elem) = match elem {
-            case JsonNumber(n) => Some(n)
+            case Json.JNumber(n) => Some(n)
             case _ => None
         };
         forM (
@@ -170,8 +169,8 @@ pub mod Bibtex {
                     Logger.info(RichString.text("[${paddedIdx}/${total}] ✓ Fetched '") + RichString.blue(name) + RichString.text("'."));
                     Some(bibtex)
                 }
-                case Err(_err) => {
-                    Logger.warn(RichString.text("[${paddedIdx}/${total}] ✗ Failed to fetch '") + RichString.blue(name) + RichString.text("'."));
+                case Err(err) => {
+                    Logger.warn(RichString.text("[${paddedIdx}/${total}] ✗ Failed to fetch '") + RichString.blue(name) + RichString.text("' (${err})."));
                     None
                 }
             },
