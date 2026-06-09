@@ -15,7 +15,7 @@
  */
 
 pub mod CrossRef {
-    use Json.JsonElement
+    use Util.Json
     use Net.Http
     use Net.HttpResponse
 
@@ -31,11 +31,11 @@ pub mod CrossRef {
         "https://api.crossref.org/works/${doi}/transform/application/vnd.citationstyles.csl+json"
 
     /// Fetches CSL-JSON metadata for a given DOI from CrossRef
-    def fetchJson(doi: String): Result[String, JsonElement] \ Http =
-        use Json.Parse.parse;
+    def fetchJson(doi: String): Result[String, Json] \ Http =
         forM (
             resp <- Http.get(getUrl(doi)) |> Result.mapErr(e -> "${e}");
-            json <- Option.toOk("Failed to parse JSON", parse(HttpResponse.body(resp)))
+            json <- Json.parse(HttpResponse.body(resp))
+                        |> Result.mapErr(e -> "Failed to parse JSON: ${e}")
         ) yield json
 
 }

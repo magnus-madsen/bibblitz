@@ -15,8 +15,7 @@
  */
 
 pub mod DataCite {
-    use Json.JsonElement
-    use Json.JsonElement.{JsonObject, JsonArray, JsonString}
+    use Util.Json
     use Net.Http
     use Net.HttpResponse
 
@@ -32,18 +31,18 @@ pub mod DataCite {
         "https://api.datacite.org/dois/${doi}"
 
     /// Fetches metadata for a given DOI from DataCite
-    def fetchJson(doi: String): Result[String, JsonElement] \ Http =
-        use Json.Parse.parse;
+    def fetchJson(doi: String): Result[String, Json] \ Http =
         forM (
             resp <- Http.get(getUrl(doi)) |> Result.mapErr(e -> "${e}");
-            json <- Option.toOk("Failed to parse JSON", parse(HttpResponse.body(resp)))
+            json <- Json.parse(HttpResponse.body(resp))
+                        |> Result.mapErr(e -> "Failed to parse JSON: ${e}")
         ) yield json
 
     /// Converts DataCite JSON to BibTeX entry
     /// DataCite has a different JSON structure than CrossRef CSL-JSON
-    def dataCiteToBibTeX(key: String, json: JsonElement): Option[Bibtex.Bibtex] =
+    def dataCiteToBibTeX(key: String, json: Json): Option[Bibtex.Bibtex] =
         match json {
-            case JsonObject(root) =>
+            case Json.JObject(root) =>
                 forM (
                     data <- JsonUtils.getJsonObject(root, "data");
                     attrs <- JsonUtils.getJsonObject(data, "attributes")
@@ -79,31 +78,31 @@ pub mod DataCite {
         }
 
     /// Gets the resource type from DataCite attributes
-    def getResourceType(attrs: Map[String, JsonElement]): String =
+    def getResourceType(attrs: Map[String, Json]): String =
         JsonUtils.getJsonObject(attrs, "types")
             |> Option.flatMap(t -> JsonUtils.getJsonString(t, "resourceTypeGeneral"))
             |> Option.getWithDefault("Other")
 
     /// Gets the title from DataCite titles array
-    def getTitleFromDataCite(attrs: Map[String, JsonElement]): Option[String] =
+    def getTitleFromDataCite(attrs: Map[String, Json]): Option[String] =
         forM (
             titles <- JsonUtils.getJsonArray(attrs, "titles");
             firstTitle <- List.head(titles)
         ) yield match firstTitle {
-            case JsonObject(t) => JsonUtils.getJsonString(t, "title") |> Option.getWithDefault("")
+            case Json.JObject(t) => JsonUtils.getJsonString(t, "title") |> Option.getWithDefault("")
             case _ => ""
         }
 
     /// Gets authors from DataCite creators array
-    def getAuthorsFromDataCite(attrs: Map[String, JsonElement]): String =
+    def getAuthorsFromDataCite(attrs: Map[String, Json]): String =
         let creators = JsonUtils.getJsonArray(attrs, "creators") |> Option.getWithDefault(Nil);
         let names = List.filterMap(formatDataCiteAuthor, creators);
         String.intercalate(" and ", names)
 
     /// Formats a single DataCite author
-    def formatDataCiteAuthor(authorJson: JsonElement): Option[String] =
+    def formatDataCiteAuthor(authorJson: Json): Option[String] =
         match authorJson {
-            case JsonObject(obj) =>
+            case Json.JObject(obj) =>
                 let family = JsonUtils.getJsonString(obj, "familyName") |> Option.getWithDefault("");
                 let given = JsonUtils.getJsonString(obj, "givenName") |> Option.getWithDefault("");
                 if (String.isEmpty(family)) {
@@ -116,12 +115,12 @@ pub mod DataCite {
         }
 
     /// Gets container (journal/proceedings) title from DataCite
-    def getContainerFromDataCite(attrs: Map[String, JsonElement]): Option[String] =
+    def getContainerFromDataCite(attrs: Map[String, Json]): Option[String] =
         JsonUtils.getJsonObject(attrs, "container")
             |> Option.flatMap(c -> JsonUtils.getJsonString(c, "title"))
 
     /// Gets publication year from DataCite
-    def getYearFromDataCite(attrs: Map[String, JsonElement]): Option[String] =
+    def getYearFromDataCite(attrs: Map[String, Json]): Option[String] =
         match JsonUtils.getJsonString(attrs, "publicationYear") {
             case Some(year) => Some(year)
             case None =>
@@ -130,7 +129,7 @@ pub mod DataCite {
                     dates <- JsonUtils.getJsonArray(attrs, "dates");
                     firstDate <- List.head(dates)
                 ) yield match firstDate {
-                    case JsonObject(d) =>
+                    case Json.JObject(d) =>
                         JsonUtils.getJsonString(d, "date")
                             |> Option.map(s -> String.slice(start = 0, end = 4, s))
                             |> Option.getWithDefault("")
@@ -139,12 +138,12 @@ pub mod DataCite {
         }
 
     /// Gets volume from DataCite container
-    def getVolumeFromDataCite(attrs: Map[String, JsonElement]): Option[String] =
+    def getVolumeFromDataCite(attrs: Map[String, Json]): Option[String] =
         JsonUtils.getJsonObject(attrs, "container")
             |> Option.flatMap(c -> JsonUtils.getJsonString(c, "volume"))
 
     /// Gets pages from DataCite container
-    def getPagesFromDataCite(attrs: Map[String, JsonElement]): Option[String] =
+    def getPagesFromDataCite(attrs: Map[String, Json]): Option[String] =
         forM (
             container <- JsonUtils.getJsonObject(attrs, "container");
             firstPage <- JsonUtils.getJsonString(container, "firstPage");
