@@ -37,8 +37,28 @@ pub mod Sanitize {
     /// Sanitizes a title string
     def sanitizeTitle(s: String): String = s
 
-    /// Sanitizes an author string
-    def sanitizeAuthor(s: String): String = s
+    /// Sanitizes an author string by converting names written entirely in
+    /// upper case (as published by e.g. Cambridge University Press) to title case
+    def sanitizeAuthor(s: String): String =
+        s |> String.words |> List.map(fixWordCase) |> String.unwords
+
+    /// Converts a word to title case if it is written entirely in upper case.
+    /// Words with fewer than two letters (e.g. initials) and words containing
+    /// any lower case letter (i.e. correctly cased names) are kept as-is.
+    def fixWordCase(w: String): String =
+        let letters = String.toList(w) |> List.filter(Char.isLetter);
+        let allUpper = List.length(letters) >= 2 and List.forAll(Char.isUpperCase, letters);
+        if (allUpper) toTitleCase(w) else w
+
+    /// Lowercases every letter that follows another letter, so each letter run
+    /// keeps only its leading capital: "JEAN-PIERRE" becomes "Jean-Pierre"
+    def toTitleCase(w: String): String =
+        def step(acc: (String, Bool), c: Char): (String, Bool) = {
+            let (res, prevIsLetter) = acc;
+            let c1 = if (prevIsLetter) Char.toLowerCase(c) else c;
+            (res + "${c1}", Char.isLetter(c))
+        };
+        String.toList(w) |> List.foldLeft(step, ("", false)) |> fst
 
     /// Sanitizes a venue string
     def sanitizeVenue(s: String): String = s
