@@ -26,7 +26,7 @@ pub mod Sanitize {
             title = sanitizeTitle(rec#title),
             author = sanitizeAuthor(rec#author),
             venue = rec#venue |> Option.map(sanitizeVenue),
-            series = rec#series,
+            series = rec#series |> Option.map(sanitizeVenue),
             year = rec#year,
             volume = rec#volume,
             pages = rec#pages,
@@ -35,7 +35,7 @@ pub mod Sanitize {
         })
 
     /// Sanitizes a title string
-    def sanitizeTitle(s: String): String = s
+    def sanitizeTitle(s: String): String = escapeAmpersands(s)
 
     /// Sanitizes an author string by converting names written entirely in
     /// upper case (as published by e.g. Cambridge University Press) to title case
@@ -61,6 +61,12 @@ pub mod Sanitize {
         String.toList(w) |> List.foldLeft(step, ("", false)) |> fst
 
     /// Sanitizes a venue string
-    def sanitizeVenue(s: String): String = s
+    def sanitizeVenue(s: String): String = escapeAmpersands(s)
+
+    /// Decodes HTML-escaped ampersands (as published by e.g. IEEE) and then
+    /// escapes bare ampersands for BibTeX: "EuroS&amp;P" becomes "EuroS\&P"
+    def escapeAmpersands(s: String): String =
+        s |> String.replace(src = "&amp;", dst = "&")
+          |> String.replace(src = "&", dst = "\\&")
     
 }
