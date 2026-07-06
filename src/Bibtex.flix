@@ -93,6 +93,14 @@ pub mod Bibtex {
                     authorsArray <- JsonUtils.getJsonArray(obj, "author");
                     doiVal <- JsonUtils.getJsonString(obj, "DOI")
                 ) yield {
+                    // CrossRef stores everything after the colon in a separate
+                    // `subtitle` field (e.g. "JSand" / "complete client-side ..."),
+                    // so the subtitle must be re-appended to get the full title.
+                    let subtitles = JsonUtils.getJsonStrings(obj, "subtitle") |> List.filter(s -> not String.isEmpty(s));
+                    let fullTitle = match List.head(subtitles) {
+                        case Some(subtitle) => "${titleVal}: ${subtitle}"
+                        case None           => titleVal
+                    };
                     let authorVal = formatAuthors(authorsArray);
                     // For papers published in a series (e.g. Springer LNCS), CrossRef lists
                     // the series title before the actual venue title, so the venue is the
@@ -110,7 +118,7 @@ pub mod Bibtex {
                     Bibtex.Bibtex({
                         entryType = bibtexType,
                         key = key,
-                        title = titleVal,
+                        title = fullTitle,
                         author = authorVal,
                         venue = venue,
                         series = series,
