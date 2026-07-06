@@ -2,6 +2,6 @@
 name        = "bibblitz"
 description = "test"
 version     = "1.0.0"
-flix        = "0.73.0"
+flix        = "0.75.0"
 authors     = ["Magnus Madsen"]
 

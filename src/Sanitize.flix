@@ -25,7 +25,8 @@ pub mod Sanitize {
             key = rec#key,
             title = sanitizeTitle(rec#title),
             author = sanitizeAuthor(rec#author),
-            journal = rec#journal |> Option.map(sanitizeJournal),
+            venue = rec#venue |> Option.map(sanitizeVenue),
+            series = rec#series,
             year = rec#year,
             volume = rec#volume,
             pages = rec#pages,
@@ -39,7 +40,7 @@ pub mod Sanitize {
     /// Sanitizes an author string
     def sanitizeAuthor(s: String): String = s
 
-    /// Sanitizes a journal string
-    def sanitizeJournal(s: String): String = s
+    /// Sanitizes a venue string
+    def sanitizeVenue(s: String): String = s
     
 }

@@ -29,7 +29,8 @@ pub mod Bibtex {
             key = String,
             title = String,
             author = String,
-            journal = Option[String],
+            venue = Option[String],
+            series = Option[String],
             year = Option[String],
             volume = Option[String],
             pages = Option[String],
@@ -56,10 +57,16 @@ pub mod Bibtex {
                 case BibtexType.Misc => "@misc"
             };
 
+            let venueKey = match rec#entryType {
+                case BibtexType.InProceedings => "booktitle"
+                case _                        => "journal"
+            };
+
             let fields = List.filterMap(identity,
                 Some("  title     = {{${rec#title}}}") ::
                 Some("  author    = {${rec#author}}") ::
-                rec#journal |> Option.map(j -> "  journal   = {{${j}}}") ::
+                rec#venue |> Option.map(v -> "  ${String.padRight(9, ' ', venueKey)} = {{${v}}}") ::
+                rec#series |> Option.map(s -> "  series    = {{${s}}}") ::
                 rec#year |> Option.map(y -> "  year      = {${y}}") ::
                 rec#volume |> Option.map(v -> "  volume    = {${v}}") ::
                 rec#publisher |> Option.map(p -> "  publisher = {{${p}}}") ::
@@ -71,9 +78,9 @@ pub mod Bibtex {
             "${typeStr}{${rec#key},\n${body}\n}"
     }
 
-    /// Converts CSL-JSON to BibTeX entry
-    pub def cslToBibTeX(key: String, cslJson: Json): Option[Bibtex] =
-        match cslJson {
+    /// Converts CrossRef works JSON to BibTeX entry
+    pub def crossRefToBibTeX(key: String, json: Json): Option[Bibtex] =
+        match json {
             case Json.JObject(obj) => {
                 let entryType = JsonUtils.getJsonString(obj, "type") |> Option.getWithDefault("misc");
                 let bibtexType = if (entryType == "journal-article") BibtexType.Article
@@ -82,14 +89,20 @@ pub mod Bibtex {
 
                 // Required fields - must be present for a valid entry
                 forM (
-                    titleVal <- JsonUtils.getJsonString(obj, "title");
+                    titleVal <- List.head(JsonUtils.getJsonStrings(obj, "title"));
                     authorsArray <- JsonUtils.getJsonArray(obj, "author");
                     doiVal <- JsonUtils.getJsonString(obj, "DOI")
                 ) yield {
                     let authorVal = formatAuthors(authorsArray);
-                    let container = JsonUtils.getJsonString(obj, "container-title");
-                    let year = JsonUtils.getJsonObject(obj, "published-print")
-                               |> Option.flatMap(extractYear);
+                    // For papers published in a series (e.g. Springer LNCS), CrossRef lists
+                    // the series title before the actual venue title, so the venue is the
+                    // last container title.
+                    let containers = JsonUtils.getJsonStrings(obj, "container-title");
+                    let venue = List.last(containers);
+                    let series = if (List.length(containers) >= 2) List.head(containers) else None;
+                    let year = ("published-print" :: "issued" :: Nil)
+                               |> List.filterMap(k -> JsonUtils.getJsonObject(obj, k) |> Option.flatMap(extractYear))
+                               |> List.head;
                     let volume = JsonUtils.getJsonString(obj, "volume");
                     let pages = JsonUtils.getJsonString(obj, "page");
                     let publisher = JsonUtils.getJsonString(obj, "publisher");
@@ -99,7 +112,8 @@ pub mod Bibtex {
                         key = key,
                         title = titleVal,
                         author = authorVal,
-                        journal = container,
+                        venue = venue,
+                        series = series,
                         year = year,
                         volume = volume,
                         pages = pages,

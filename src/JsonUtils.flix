@@ -24,6 +24,17 @@ pub mod JsonUtils {
             case _                     => None
         }
 
+    /// Gets a field that is either a string or an array of strings from a JSON object
+    pub def getJsonStrings(obj: Map[String, Json], key: String): List[String] =
+        match Map.get(key, obj) {
+            case Some(Json.JString(s)) => s :: Nil
+            case Some(Json.JArray(a))  => Vector.toList(a) |> List.filterMap(j -> match j {
+                case Json.JString(s) => Some(s)
+                case _               => None
+            })
+            case _                     => Nil
+        }
+
     /// Gets an array field from a JSON object
     pub def getJsonArray(obj: Map[String, Json], key: String): Option[List[Json]] =
         match Map.get(key, obj) {

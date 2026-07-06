@@ -19,11 +19,11 @@ pub mod DataCite {
     use Net.Http
     use Net.HttpResponse
 
-    /// Fetches CSL-JSON and converts to BibTeX for a single reference from DataCite
+    /// Fetches DataCite metadata and converts to BibTeX for a single reference
     pub def fetchBibTeX(name: String, doi: String): Result[String, Bibtex.Bibtex] \ Http =
         forM (
-            cslJson <- fetchJson(doi);
-            bibtex <- Option.toOk("Failed to convert to BibTeX", dataCiteToBibTeX(name, cslJson))
+            json <- fetchJson(doi);
+            bibtex <- Option.toOk("Failed to convert to BibTeX", dataCiteToBibTeX(name, json))
         ) yield bibtex
 
     /// Constructs the DataCite API URL for fetching metadata
@@ -39,7 +39,7 @@ pub mod DataCite {
         ) yield json
 
     /// Converts DataCite JSON to BibTeX entry
-    /// DataCite has a different JSON structure than CrossRef CSL-JSON
+    /// DataCite has a different JSON structure than CrossRef
     def dataCiteToBibTeX(key: String, json: Json): Option[Bibtex.Bibtex] =
         match json {
             case Json.JObject(root) =>
@@ -66,7 +66,8 @@ pub mod DataCite {
                         key = key,
                         title = titleVal,
                         author = authorVal,
-                        journal = container,
+                        venue = container,
+                        series = None,
                         year = year,
                         volume = volume,
                         pages = pages,
