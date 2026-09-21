@@ -1,7 +1,4 @@
 [package]
-name        = "bibblitz"
-description = "test"
-version     = "1.0.0"
-flix        = "0.75.0"
-authors     = ["Magnus Madsen"]
+version     = "1.7.0"
+flix        = "0.76.2"
 
