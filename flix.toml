@@ -1,4 +1,4 @@
 [package]
 version     = "1.7.0"
-flix        = "0.76.2"
+flix        = "0.80.0"
 

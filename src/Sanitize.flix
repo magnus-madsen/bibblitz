@@ -35,7 +35,7 @@ pub mod Sanitize {
         })
 
     /// Sanitizes a title string
-    def sanitizeTitle(s: String): String = escapeAmpersands(s)
+    def sanitizeTitle(s: String): String = s |> collapseWhitespace |> escapeAmpersands
 
     /// Sanitizes an author string by converting names written entirely in
     /// upper case (as published by e.g. Cambridge University Press) to title case
@@ -51,17 +51,31 @@ pub mod Sanitize {
         if (allUpper) toTitleCase(w) else w
 
     /// Lowercases every letter that follows another letter, so each letter run
-    /// keeps only its leading capital: "JEAN-PIERRE" becomes "Jean-Pierre"
+    /// keeps only its leading capital: "JEAN-PIERRE" becomes "Jean-Pierre".
+    /// The letter after a leading "Mc" also stays a capital: "MCBRIDE" becomes
+    /// "McBride". ("Mac" is left alone since it is ambiguous: Mackie, MacDonald.)
     def toTitleCase(w: String): String =
-        def step(acc: (String, Bool), c: Char): (String, Bool) = {
-            let (res, prevIsLetter) = acc;
-            let c1 = if (prevIsLetter) Char.toLowerCase(c) else c;
-            (res + "${c1}", Char.isLetter(c))
+        // `seen` holds the letters of the current letter run consumed so far.
+        def step(acc: (String, String), c: Char): (String, String) = {
+            let (res, seen) = acc;
+            if (not Char.isLetter(c))
+                (res + "${c}", "")
+            else {
+                let keepCase = String.isEmpty(seen) or seen == "MC";
+                let c1 = if (keepCase) c else Char.toLowerCase(c);
+                (res + "${c1}", seen + "${c}")
+            }
         };
-        String.toList(w) |> List.foldLeft(step, ("", false)) |> fst
+        String.toList(w) |> List.foldLeft(step, ("", "")) |> fst
 
     /// Sanitizes a venue string
-    def sanitizeVenue(s: String): String = escapeAmpersands(s)
+    def sanitizeVenue(s: String): String = s |> collapseWhitespace |> escapeAmpersands
+
+    /// Collapses every run of whitespace, including line breaks embedded in the
+    /// metadata (as published by e.g. Cambridge University Press), into a single
+    /// space: "Compiler \ninliner" becomes "Compiler inliner"
+    def collapseWhitespace(s: String): String =
+        s |> String.words |> String.unwords
 
     /// Decodes HTML-escaped ampersands (as published by e.g. IEEE) and then
     /// escapes bare ampersands for BibTeX: "EuroS&amp;P" becomes "EuroS\&P"
